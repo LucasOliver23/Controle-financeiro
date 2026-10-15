@@ -180,6 +180,14 @@
         .pf-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px; border-radius: 20px; font-size: 12px; font-weight: 600;
             background: linear-gradient(180deg, #161618, #0f0f11); border: 1px solid rgba(255,255,255,.06); }
         .pf-tile .set-icon { width: 40px; height: 40px; border-radius: 14px; font-size: 16px; }
+        /* ===== Sair das dívidas ===== */
+        .debt-hero { border-radius: 28px; padding: 20px; position: relative; overflow: hidden; border: 1px solid rgba(245,158,11,.25);
+            background: radial-gradient(110% 90% at 100% 0%, rgba(245,158,11,.30) 0%, rgba(245,158,11,0) 55%), radial-gradient(90% 80% at 0% 100%, rgba(0,208,132,.18) 0%, rgba(0,208,132,0) 60%), linear-gradient(160deg, #1f1708 0%, #0b0b0d 65%); }
+        .debt-card { border-radius: 24px; padding: 18px; background: linear-gradient(180deg, #151517, #0f0f11); border: 1px solid rgba(255,255,255,.06); }
+        .debt-step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; }
+        .debt-step .dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+        .chip { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.06); color: #a1a1aa; border: 1px solid rgba(255,255,255,.06); }
+        .chip.on { background: #00d084; color: #000; border-color: #00d084; }
     </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -300,6 +308,16 @@
                     <button type="button" onclick="(window.navTo||switchTab)('recurring')" class="dash-action"><span class="text-violet-400"><i class="fa-solid fa-rotate"></i></span>Fixas</button>
                     <button type="button" onclick="(window.navTo||switchTab)('goals')" class="dash-action"><span class="text-amber-400"><i class="fa-solid fa-bullseye"></i></span>Metas</button>
                 </div>
+
+                <!-- ============ SAIR DAS DÍVIDAS (atalho) ============ -->
+                <button type="button" onclick="(window.navTo||switchTab)('debts')" id="dashDebtBanner" class="debt-hero w-full text-left flex items-center gap-3 !p-4">
+                    <span class="w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center bg-amber-400/20 text-amber-300"><i class="fa-solid fa-person-running"></i></span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block text-sm font-bold text-white">Sair das dívidas</span>
+                        <span id="dashDebtSub" class="block text-[11px] text-white/60">Monte seu plano e veja o dia da liberdade</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-white/50"></i>
+                </button>
 
                 <!-- ============ QUANTO POSSO GASTAR HOJE ============ -->
                 <section id="safeSpendCard" class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5"></section>
@@ -648,6 +666,84 @@
 
 
             <!-- ===================== ABA DE PERFIL (menu de configurações) ===================== -->
+            <!-- ===================== TAB: SAIR DAS DÍVIDAS ===================== -->
+            <div id="tab-debts" class="space-y-4 max-w-xl mx-auto hidden">
+                <section class="debt-hero">
+                    <p class="text-[11px] font-semibold uppercase tracking-[.14em] text-amber-200/70">Seu dia da liberdade</p>
+                    <h1 id="debtFreeDate" class="text-[34px] font-extrabold tracking-tight text-white leading-tight mt-1">—</h1>
+                    <p id="debtFreeSub" class="text-xs text-white/60"></p>
+                    <div class="h-2 rounded-full bg-white/10 mt-4 overflow-hidden"><div id="debtProgressBar" class="h-full rounded-full" style="width:0;background:linear-gradient(90deg,#f59e0b,#00d084)"></div></div>
+                    <p id="debtProgressTxt" class="text-[11px] text-white/60 mt-1.5"></p>
+                    <div class="grid grid-cols-3 gap-2 mt-4">
+                        <div class="dash-tile"><p class="text-[10px] text-white/60">Ainda devo</p><p id="debtTotal" class="sensitive text-[13px] font-bold text-amber-300 whitespace-nowrap">—</p></div>
+                        <div class="dash-tile"><p class="text-[10px] text-white/60">Parcelas/mês</p><p id="debtMonthly" class="sensitive text-[13px] font-bold text-rose-300 whitespace-nowrap">—</p></div>
+                        <div class="dash-tile"><p class="text-[10px] text-white/60">Da renda</p><p id="debtPct" class="text-[13px] font-bold whitespace-nowrap">—</p></div>
+                    </div>
+                </section>
+
+                <!-- Raio-X do mês real (ciclo dos recebimentos) -->
+                <section class="debt-card">
+                    <h3 class="dash-h3 text-sm font-semibold"><i class="fa-regular fa-calendar"></i>Seu mês de verdade</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">O dinheiro chega em datas diferentes. Veja quanto entra e sai em cada período.</p>
+                    <div id="debtCycle" class="mt-3 space-y-2.5"></div>
+                    <div id="debtCycleTip" class="mt-3"></div>
+                </section>
+
+                <!-- Estratégia -->
+                <section class="debt-card">
+                    <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-chess"></i>Estratégia</h3>
+                    <div class="seg mt-3 w-full grid grid-cols-2">
+                        <button type="button" data-dstrat="avalanche" onclick="setDebtPlan({strategy:'avalanche'})">Avalanche</button>
+                        <button type="button" data-dstrat="snowball" onclick="setDebtPlan({strategy:'snowball'})">Bola de neve</button>
+                    </div>
+                    <p id="debtStratTxt" class="text-[11px] text-slate-400 mt-2"></p>
+                    <p class="text-xs font-semibold mt-4">Quanto a mais por mês você consegue colocar?</p>
+                    <div class="flex flex-wrap gap-2 mt-2" id="debtExtraChips"></div>
+                    <div id="debtExtraGain" class="mt-3"></div>
+                </section>
+
+                <!-- Dívidas -->
+                <section class="debt-card">
+                    <header class="flex items-center justify-between">
+                        <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-list-check"></i>Minhas dívidas</h3>
+                        <button type="button" onclick="openDebtModal()" class="px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-semibold">+ Adicionar</button>
+                    </header>
+                    <p class="text-[11px] text-slate-400 mt-1">Na ordem em que o plano manda atacar.</p>
+                    <div id="debtList" class="mt-2"></div>
+                </section>
+
+                <!-- Jornada -->
+                <section class="debt-card">
+                    <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-route"></i>Jornada até a liberdade</h3>
+                    <div id="debtSteps" class="mt-2"></div>
+                </section>
+
+                <!-- Regras de ouro -->
+                <section class="debt-card">
+                    <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-shield-halved"></i>Regras de ouro</h3>
+                    <ul class="mt-3 space-y-2.5 text-[13px] text-slate-300">
+                        <li class="flex gap-2"><span>🚫</span><span><b>Nenhuma dívida nova</b> até o fim do plano. Empréstimo para pagar empréstimo só aumenta o buraco.</span></li>
+                        <li class="flex gap-2"><span>📅</span><span><b>Separe o dinheiro no dia que ele chega</b>: contas do período, dívidas e só depois o resto.</span></li>
+                        <li class="flex gap-2"><span>🛟</span><span><b>Mini reserva primeiro</b>: com uns R$ 500 guardados você para de pegar emprestado no imprevisto.</span></li>
+                        <li class="flex gap-2"><span>⚡</span><span><b>Todo extra vai para a dívida da vez</b>: bico, 13º, restituição, venda de algo.</span></li>
+                        <li class="flex gap-2"><span>🤝</span><span><b>Renegocie antes de atrasar</b>: Serasa Limpa Nome, feirões do banco e portabilidade do consignado para juros menores.</span></li>
+                    </ul>
+                </section>
+
+                <!-- Livros -->
+                <section class="debt-card">
+                    <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-book-open"></i>O que os livros ensinam</h3>
+                    <div class="mt-3 space-y-3">
+                        <div class="flex gap-3"><span class="text-2xl">🏺</span><div><p class="text-[13px] font-semibold">O Homem Mais Rico da Babilônia</p><p class="text-[11px] text-slate-400">George S. Clason · No capítulo das tábuas de argila, Dabasir sai das dívidas vivendo com 70% do que ganha, separando 20% para os credores e guardando 10% para ele.</p></div></div>
+                        <div class="flex gap-3"><span class="text-2xl">❄️</span><div><p class="text-[13px] font-semibold">A Transformação Total do seu Dinheiro</p><p class="text-[11px] text-slate-400">Dave Ramsey · Mini reserva, parar de se endividar e o método bola de neve: quitar a menor e rolar o valor para a próxima.</p></div></div>
+                        <div class="flex gap-3"><span class="text-2xl">🐷</span><div><p class="text-[13px] font-semibold">Me Poupe!</p><p class="text-[11px] text-slate-400">Nathalia Arcuri · Conheça seus números de verdade e pague-se primeiro, mesmo que seja pouco.</p></div></div>
+                        <div class="flex gap-3"><span class="text-2xl">💼</span><div><p class="text-[13px] font-semibold">Dinheiro: os segredos de quem tem</p><p class="text-[11px] text-slate-400">Gustavo Cerbasi · Ajuste o padrão de vida ao que você ganha, não ao que o crédito permite.</p></div></div>
+                        <div class="flex gap-3"><span class="text-2xl">🧠</span><div><p class="text-[13px] font-semibold">A Psicologia Financeira</p><p class="text-[11px] text-slate-400">Morgan Housel · Comportamento vale mais que conhecimento: constância vence o plano perfeito.</p></div></div>
+                    </div>
+                </section>
+                <p class="text-center text-[10px] text-slate-500 px-6 pb-2">As datas são estimativas com base nas parcelas cadastradas. Não é aconselhamento financeiro profissional.</p>
+            </div>
+
             <div id="tab-profile" class="max-w-xl mx-auto hidden">
 
                 <!-- ---------- TELA PRINCIPAL ---------- -->
@@ -680,6 +776,11 @@
                 </div>
                 <div>
                     <h3 class="set-title">Finanças</h3>
+                    <button type="button" data-nav="debts" class="debt-hero w-full text-left flex items-center gap-3 !p-4 mb-2.5">
+                        <span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center bg-amber-400/20 text-amber-300"><i class="fa-solid fa-person-running"></i></span>
+                        <span class="flex-1"><span class="block text-sm font-bold text-white">Sair das dívidas</span><span class="block text-[11px] text-white/60">Plano, prazo e jornada até a liberdade</span></span>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-white/50"></i>
+                    </button>
                     <div class="grid grid-cols-3 gap-2.5">
                         <button type="button" data-nav="accounts" class="pf-tile"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-building-columns"></i></span>Contas</button>
                         <button type="button" data-nav="cards" class="pf-tile"><span class="set-icon" style="--c:#f43f5e"><i class="fa-regular fa-credit-card"></i></span>Cartões</button>
@@ -706,7 +807,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">22</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">23</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -745,7 +846,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">22</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">23</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -806,6 +907,26 @@
     <!-- === MODAIS === -->
 
     <!-- === MODAIS === -->
+
+    <div id="debtModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+        <form onsubmit="saveDebt(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-3 border border-slate-200 dark:border-white/[0.08]">
+            <div class="flex justify-between items-center"><h3 id="debtModalTitle" class="font-bold text-lg">Nova dívida</h3><button type="button" onclick="closeDebtModal()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button></div>
+            <input type="hidden" id="debtId">
+            <input id="debtName" required placeholder="Nome (ex.: Acordo Nubank)" class="w-full px-4 py-3 rounded-xl bg-slate-800 text-sm">
+            <select id="debtType" class="w-full px-4 py-3 rounded-xl bg-slate-800 text-sm">
+                <option value="card">Cartão de crédito</option><option value="loan">Empréstimo (Shopee, banco…)</option><option value="payroll">Consignado (desconta no salário)</option><option value="deal">Acordo / renegociação</option><option value="other">Outra</option>
+            </select>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="text-[11px] text-slate-400">Valor da parcela<input id="debtParcel" type="number" step="0.01" min="0" required class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400">Vence todo dia<input id="debtDay" type="number" min="1" max="31" value="10" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400">Total de parcelas<input id="debtTotal_" type="number" min="1" required class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400">Já paguei<input id="debtPaid" type="number" min="0" value="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400 col-span-2">Juros ao mês (%) — se não souber, deixe em branco<input id="debtRate" type="number" step="0.01" min="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Salvar</button>
+            <button type="button" id="debtDelBtn" onclick="deleteDebt()" class="hidden w-full py-2 text-xs font-semibold text-rose-400">Excluir dívida</button>
+        </form>
+    </div>
 
     <div id="transactionModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
         <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto shadow-2xl p-6 space-y-5 border border-slate-200 dark:border-white/[0.08]">
@@ -1273,7 +1394,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 22;
+        var APP_VERSION = 23;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1351,7 +1472,7 @@
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1387,6 +1508,8 @@
             transactions: JSON.parse(localStorage.getItem('df_transactions')) || [],
             investments: JSON.parse(localStorage.getItem('df_investments')) || [],
             goals: JSON.parse(localStorage.getItem('df_goals')) || [],
+            debts: JSON.parse(localStorage.getItem('df_debts')) || [],
+            debtPlan: JSON.parse(localStorage.getItem('df_debtPlan')) || { strategy: 'avalanche', extra: 0, reserveGoal: 500 },
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -1395,7 +1518,7 @@
         const tabTitles = {
             'dashboard': 'Dashboard', 'transactions': 'Transações', 'recurring': 'Recorrentes',
             'accounts': 'Contas', 'cards': 'Cartões', 'categories': 'Categorias',
-            'budgets': 'Limites de Gastos', 'goals': 'Metas', 'investments': 'Investimentos', 'reports': 'Relatórios', 'profile': 'Perfil'
+            'budgets': 'Limites de Gastos', 'goals': 'Metas', 'investments': 'Investimentos', 'reports': 'Relatórios', 'profile': 'Perfil', 'debts': 'Sair das dívidas'
         };
 
         window.openMobileSidebar = function() {
@@ -3289,6 +3412,194 @@
             const committed = recOut + pendOut + cardOut, free = saldo - committed;
             return { saldo, committed, recOut, pendOut, cardOut, free, perDay: free / days, days, payday, payName, hasPayday };
         }
+        // =====================================================================
+        //  SAIR DAS DÍVIDAS: cadastro, simulação (avalanche / bola de neve),
+        //  ciclo real dos recebimentos e jornada.
+        // =====================================================================
+        const DEBT_TYPES = { card: ['Cartão', 'fa-regular fa-credit-card', '#f43f5e'], loan: ['Empréstimo', 'fa-solid fa-hand-holding-dollar', '#f59e0b'],
+            payroll: ['Consignado', 'fa-solid fa-building', '#8b5cf6'], deal: ['Acordo', 'fa-solid fa-handshake', '#38bdf8'], other: ['Outra', 'fa-solid fa-file-invoice-dollar', '#a1a1aa'] };
+        const debtLeft = d => Math.max(0, (Number(d.total) || 0) - (Number(d.paid) || 0));
+        const ymAdd = (ym, n) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+        const ymNome = ym => { const [y, m] = ym.split('-'); return `${MONTH_NAMES[Number(m) - 1]} de ${y}`; };
+
+        // Simula mês a mês: paga as parcelas; o extra + parcelas de dívidas já quitadas vão para a dívida "da vez"
+        function simulateDebts(debts, strategy, extra) {
+            const ds = debts.filter(d => debtLeft(d) > 0).map(d => ({ id: d.id, parcel: Number(d.parcel) || 0, rate: Number(d.rate) || 0, rest: debtLeft(d) * (Number(d.parcel) || 0) }));
+            const ends = {}; let month = 0, freed = 0;
+            const ordem = () => ds.filter(d => d.rest > 0.005).sort((a, b) => strategy === 'snowball' ? a.rest - b.rest : (b.rate - a.rate) || (a.rest - b.rest));
+            while (ds.some(d => d.rest > 0.005) && month < 600) {
+                month++;
+                ds.forEach(d => { if (d.rest > 0.005) d.rest -= Math.min(d.parcel, d.rest); });
+                let pool = extra + freed;
+                for (const t of ordem()) { const u = Math.min(pool, t.rest); t.rest -= u; pool -= u; if (pool <= 0) break; }
+                ds.forEach(d => { if (d.rest <= 0.005 && !ends[d.id]) { ends[d.id] = month; freed += d.parcel; } });
+            }
+            return { ends, months: month, order: [...debts].filter(d => debtLeft(d) > 0).sort((a, b) => strategy === 'snowball' ? debtLeft(a) * a.parcel - debtLeft(b) * b.parcel : ((Number(b.rate) || 0) - (Number(a.rate) || 0)) || (debtLeft(a) * a.parcel - debtLeft(b) * b.parcel)) };
+        }
+
+        window.setDebtPlan = function(patch) { Object.assign(S_().debtPlan, patch); saveAndRefresh(); };
+        window.payDebtInstallment = function(id) {
+            const d = S_().debts.find(x => x.id === id); if (!d) return;
+            d.paid = Math.min(Number(d.total), (Number(d.paid) || 0) + 1);
+            saveAndRefresh(); showToast(debtLeft(d) === 0 ? `🎉 ${d.name} quitada!` : `Parcela registrada: ${d.paid}/${d.total}`);
+        };
+        window.openDebtModal = function(id) {
+            const d = id ? S_().debts.find(x => x.id === id) : null;
+            document.getElementById('debtModalTitle').textContent = d ? 'Editar dívida' : 'Nova dívida';
+            document.getElementById('debtId').value = d ? d.id : '';
+            document.getElementById('debtName').value = d ? d.name : '';
+            document.getElementById('debtType').value = d ? d.type : 'loan';
+            document.getElementById('debtParcel').value = d ? d.parcel : '';
+            document.getElementById('debtDay').value = d ? d.day : 10;
+            document.getElementById('debtTotal_').value = d ? d.total : '';
+            document.getElementById('debtPaid').value = d ? d.paid : 0;
+            document.getElementById('debtRate').value = d && d.rate ? d.rate : '';
+            document.getElementById('debtDelBtn').classList.toggle('hidden', !d);
+            document.getElementById('debtModal').classList.remove('hidden');
+        };
+        window.closeDebtModal = () => document.getElementById('debtModal').classList.add('hidden');
+        window.saveDebt = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('debtId').value, list = S_().debts;
+            const data = { name: document.getElementById('debtName').value.trim(), type: document.getElementById('debtType').value,
+                parcel: parseFloat(document.getElementById('debtParcel').value) || 0, day: parseInt(document.getElementById('debtDay').value) || 10,
+                total: parseInt(document.getElementById('debtTotal_').value) || 1, paid: parseInt(document.getElementById('debtPaid').value) || 0,
+                rate: parseFloat(document.getElementById('debtRate').value) || 0 };
+            if (id) Object.assign(list.find(x => x.id === id), data); else list.push({ id: 'debt_' + Date.now(), ...data });
+            closeDebtModal(); saveAndRefresh(); showToast('Dívida salva');
+        };
+        window.deleteDebt = function() {
+            const id = document.getElementById('debtId').value;
+            if (!id || !confirm('Excluir esta dívida do plano?')) return;
+            S_().debts = S_().debts.filter(x => x.id !== id); closeDebtModal(); saveAndRefresh();
+        };
+
+        function renderDebts() {
+            const S = S_(); if (!document.getElementById('tab-debts')) return;
+            if (!S.debts) S.debts = []; if (!S.debtPlan) S.debtPlan = { strategy: 'avalanche', extra: 0, reserveGoal: 500 };
+            const plan = S.debtPlan, ativos = S.debts.filter(d => debtLeft(d) > 0);
+            const thisYM = isoDate(new Date()).slice(0, 7);
+            const sim = simulateDebts(S.debts, plan.strategy, Number(plan.extra) || 0);
+            const totalDevo = ativos.reduce((a, d) => a + debtLeft(d) * d.parcel, 0);
+            const totalOrig = S.debts.reduce((a, d) => a + (Number(d.total) || 0) * (Number(d.parcel) || 0), 0);
+            const mensal = ativos.reduce((a, d) => a + Number(d.parcel), 0);
+            const folha = ativos.filter(d => d.type === 'payroll').reduce((a, d) => a + Number(d.parcel), 0);
+            const entradas = S.recurring.filter(r => r.type === 'income');
+            const rendaCaixa = entradas.reduce((a, r) => a + (Number(r.amount) || 0), 0);
+            const rendaBruta = rendaCaixa + folha;
+            const pct = rendaBruta > 0 ? Math.round(mensal / rendaBruta * 100) : 0;
+            const fmt = v => formatCurrency(v);
+
+            // Atalho do Dashboard
+            const sub = document.getElementById('dashDebtSub');
+            if (sub) sub.textContent = ativos.length ? `${fmt(mensal)}/mês em parcelas · livre em ${ymNome(ymAdd(thisYM, sim.months)).toLowerCase()}` : 'Monte seu plano e veja o dia da liberdade';
+
+            document.getElementById('debtFreeDate').textContent = ativos.length ? ymNome(ymAdd(thisYM, sim.months)) : (S.debts.length ? 'Você está livre! 🎉' : 'Cadastre suas dívidas');
+            document.getElementById('debtFreeSub').textContent = ativos.length ? `daqui a ${sim.months} ${sim.months === 1 ? 'mês' : 'meses'}, seguindo o plano` : '';
+            const pago = totalOrig > 0 ? Math.round((1 - totalDevo / totalOrig) * 100) : 0;
+            document.getElementById('debtProgressBar').style.width = pago + '%';
+            document.getElementById('debtProgressTxt').textContent = `${pago}% do caminho já percorrido`;
+            document.getElementById('debtTotal').textContent = fmt(totalDevo);
+            document.getElementById('debtMonthly').textContent = fmt(mensal);
+            const pe = document.getElementById('debtPct'); pe.textContent = rendaBruta ? pct + '%' : '—';
+            pe.className = `text-[13px] font-bold whitespace-nowrap ${pct > 30 ? 'text-rose-400' : pct > 20 ? 'text-amber-300' : 'text-emerald-400'}`;
+
+            // ----- Mês de verdade: períodos entre um recebimento e o próximo -----
+            const cyc = document.getElementById('debtCycle'), tip = document.getElementById('debtCycleTip');
+            const dias = [...new Set(entradas.map(r => Number(r.day) || 1))].sort((a, b) => a - b);
+            if (!dias.length) {
+                cyc.innerHTML = `<p class="text-xs text-slate-400">Cadastre seus recebimentos (salário, vale, benefício) em <button type="button" onclick="(window.navTo||switchTab)('recurring')" class="text-emerald-400 font-semibold">Fixas</button> para ver seu mês real.</p>`;
+                tip.innerHTML = '';
+            } else {
+                const contas = [
+                    ...S.recurring.filter(r => r.type === 'expense').map(r => ({ nome: r.desc, v: Number(r.amount) || 0, dia: Number(r.day) || 1 })),
+                    ...ativos.filter(d => d.type !== 'payroll').map(d => ({ nome: d.name, v: Number(d.parcel), dia: Number(d.day) || 1 }))
+                ];
+                const periodos = dias.map((d, i) => {
+                    const fim = dias[(i + 1) % dias.length];
+                    const dentro = x => dias.length === 1 ? true : (d < fim ? x >= d && x < fim : x >= d || x < fim);
+                    const ent = entradas.filter(r => (Number(r.day) || 1) === d);
+                    const sai = contas.filter(c => dentro(c.dia));
+                    return { d, fim, ent, entV: ent.reduce((a, r) => a + Number(r.amount), 0), sai, saiV: sai.reduce((a, c) => a + c.v, 0) };
+                });
+                cyc.innerHTML = periodos.map(p => {
+                    const saldo = p.entV - p.saiV;
+                    return `<div class="rounded-2xl p-3 bg-white/[0.04] border border-white/[0.06]">
+                        <div class="flex items-center justify-between"><p class="text-[13px] font-semibold">Do dia ${p.d} ao dia ${dias.length > 1 ? (p.fim === 1 ? 'fim do mês' : p.fim - 1) : p.d - 1 || 'fim do mês'}</p>
+                        <span class="sensitive text-xs font-bold ${saldo < 0 ? 'text-rose-400' : 'text-emerald-400'}">${saldo < 0 ? '−' : '+'} ${fmt(Math.abs(saldo))}</span></div>
+                        <p class="text-[11px] text-slate-400 mt-1">Entra <b class="sensitive text-emerald-400">${fmt(p.entV)}</b> (${p.ent.map(r => escHTML(r.desc)).join(', ')}) · sai <b class="sensitive text-rose-300">${fmt(p.saiV)}</b> em ${p.sai.length} conta(s)</p>
+                    </div>`; }).join('');
+                const falta = periodos.filter(p => p.entV - p.saiV < 0);
+                const maior = [...periodos].sort((a, b) => b.entV - a.entV)[0];
+                const sobraMes = periodos.reduce((a, p) => a + p.entV - p.saiV, 0);
+                tip.innerHTML = falta.length && maior
+                    ? `<div class="rounded-2xl p-3 bg-amber-400/10 border border-amber-400/20 text-[12px] text-amber-100"><b>💡 É aqui que você entra no vermelho.</b> Quando cair o dinheiro do dia ${maior.d}, separe <b class="sensitive">${fmt(falta.reduce((a, p) => a + (p.saiV - p.entV), 0))}</b> para as contas ${falta.map(p => `do dia ${p.d} em diante`).join(' e ')}. Sem isso, você precisa pegar emprestado antes do próximo recebimento.</div>`
+                    : '';
+                tip.innerHTML += `<p class="text-[11px] mt-2 ${sobraMes < 0 ? 'text-rose-400' : 'text-slate-400'}">No mês inteiro: ${sobraMes < 0 ? 'faltam' : 'sobram'} <b class="sensitive">${fmt(Math.abs(sobraMes))}</b> depois das contas fixas e parcelas${sobraMes < 0 ? ' — o plano não fecha; corte gastos ou renegocie' : ' para mercado, transporte e o resto'}.</p>`;
+            }
+
+            // ----- Estratégia -----
+            document.querySelectorAll('[data-dstrat]').forEach(b => b.classList.toggle('on', b.dataset.dstrat === plan.strategy));
+            document.getElementById('debtStratTxt').textContent = plan.strategy === 'snowball'
+                ? 'Bola de neve: ataca primeiro a menor dívida. Você vê dívidas sumindo rápido, o que dá ânimo para continuar.'
+                : 'Avalanche: ataca primeiro a de juros mais altos (cartão, empréstimo). É o jeito que paga menos juros no total.';
+            const extras = [0, 50, 100, 200];
+            document.getElementById('debtExtraChips').innerHTML = extras.map(v => `<button type="button" class="chip ${Number(plan.extra) === v ? 'on' : ''}" onclick="setDebtPlan({extra:${v}})">${v ? '+ ' + fmt(v).replace(',00', '') : 'Só as parcelas'}</button>`).join('');
+            const sem = simulateDebts(S.debts, plan.strategy, 0).months;
+            document.getElementById('debtExtraGain').innerHTML = ativos.length && Number(plan.extra) > 0 && sem > sim.months
+                ? `<p class="text-[12px] text-emerald-400 font-semibold">⚡ Com ${fmt(Number(plan.extra))} a mais você fica livre ${sem - sim.months} ${sem - sim.months === 1 ? 'mês' : 'meses'} antes (${ymNome(ymAdd(thisYM, sim.months)).toLowerCase()}).</p>`
+                : `<p class="text-[11px] text-slate-400">Quando uma dívida acaba, o valor da parcela dela vai automaticamente para a próxima da lista.</p>`;
+
+            // ----- Lista -----
+            document.getElementById('debtList').innerHTML = sim.order.length || S.debts.length
+                ? sim.order.concat(S.debts.filter(d => debtLeft(d) === 0)).map((d, k) => {
+                    const t = DEBT_TYPES[d.type] || DEBT_TYPES.other, left = debtLeft(d), pc = Math.round((Number(d.paid) || 0) / (Number(d.total) || 1) * 100);
+                    const fim = sim.ends[d.id] ? ymNome(ymAdd(thisYM, sim.ends[d.id])) : '';
+                    const juros = Number(d.rate) || 0;
+                    const tag = !juros ? '' : juros >= 6 ? '<span class="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 text-[10px] font-semibold">juros altos</span>' : juros >= 3 ? '<span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-semibold">juros médios</span>' : '<span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold">juros baixos</span>';
+                    return `<div class="py-3 ${k ? 'border-t border-white/[0.06]' : ''}">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-sm" style="background:${t[2]}22;color:${t[2]}"><i class="${t[1]}"></i></span>
+                            <button type="button" onclick="openDebtModal('${d.id}')" class="min-w-0 flex-1 text-left">
+                                <p class="text-sm font-semibold truncate">${k === 0 && left ? '🎯 ' : ''}${escHTML(d.name)}</p>
+                                <p class="text-[11px] text-slate-400">${t[0]}${d.type === 'payroll' ? ' · desconta no salário' : ` · dia ${d.day}`} · ${fmt(Number(d.parcel))}/mês</p>
+                            </button>
+                            <div class="text-right shrink-0">
+                                <p class="sensitive text-sm font-semibold">${fmt(left * d.parcel)}</p>
+                                <p class="text-[10px] text-slate-400">${left ? `${left} parcela(s)` : 'quitada ✅'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2 pl-[52px]">
+                            <div class="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full" style="width:${pc}%;background:${t[2]}"></div></div>
+                            <span class="text-[10px] text-slate-400 shrink-0">${d.paid}/${d.total}</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2 pl-[52px] flex-wrap">${tag}${fim ? `<span class="text-[10px] text-slate-400">termina em ${fim.toLowerCase()}</span>` : ''}
+                            ${left && d.type !== 'payroll' ? `<button type="button" onclick="payDebtInstallment('${d.id}')" class="ml-auto px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">Paguei a parcela</button>` : ''}</div>
+                    </div>`; }).join('')
+                : `<p class="text-xs text-slate-400 py-2">Comece cadastrando cada dívida: cartão, empréstimos, acordos e consignado.</p>`;
+
+            // ----- Jornada -----
+            const caras = ativos.filter(d => (Number(d.rate) || 0) >= 5 || d.type === 'card');
+            const reserva = S.goals.find(g => /reserva|emerg/i.test(g.name || ''));
+            const temReserva = reserva && (Number(reserva.totalSaved) || Number(reserva.saved) || 0) >= (plan.reserveGoal || 500);
+            const fecha = (() => { const e = entradas.reduce((a, r) => a + Number(r.amount), 0); const o = S.recurring.filter(r => r.type === 'expense').reduce((a, r) => a + Number(r.amount), 0) + ativos.filter(d => d.type !== 'payroll').reduce((a, d) => a + Number(d.parcel), 0); return e > 0 && e - o >= 0; })();
+            const etapas = [
+                ['Colocar tudo no papel', 'Cadastrar dívidas, recebimentos e contas fixas.', S.debts.length > 0 && entradas.length > 0],
+                ['Parar de afundar', 'O mês precisa fechar no azul, sem pegar empréstimo novo.', fecha],
+                [`Mini reserva de ${fmt(plan.reserveGoal || 500).replace(',00', '')}`, 'Crie uma meta "Reserva" e guarde aos poucos. É ela que te salva do próximo empréstimo.', temReserva],
+                ['Quitar as dívidas caras', 'Cartão e empréstimos de juros altos primeiro.', S.debts.length > 0 && caras.length === 0],
+                ['Quitar o resto (inclusive o consignado)', 'Quando cada uma acabar, o valor dela vai para a próxima.', S.debts.length > 0 && ativos.length === 0],
+                ['Reserva de 3 a 6 meses e investir', 'Agora o dinheiro trabalha para você: liberdade financeira.', false]
+            ];
+            const atual = etapas.findIndex(e => !e[2]);
+            document.getElementById('debtSteps').innerHTML = etapas.map((e, i) => {
+                const feito = e[2] && i < (atual === -1 ? 99 : atual) || (e[2] && i !== atual), agora = i === atual;
+                return `<div class="debt-step">
+                    <span class="dot ${feito ? 'bg-emerald-500 text-black' : agora ? 'bg-amber-400 text-black' : 'bg-white/10 text-slate-400'}">${feito ? '<i class="fa-solid fa-check"></i>' : i + 1}</span>
+                    <div><p class="text-[13px] font-semibold ${agora ? 'text-amber-300' : feito ? 'text-slate-300' : 'text-slate-400'}">${e[0]}${agora ? ' · você está aqui' : ''}</p><p class="text-[11px] text-slate-500">${e[1]}</p></div>
+                </div>`; }).join('');
+        }
+
         function renderSafeToSpend() {
             const el = document.getElementById('safeSpendCard'); if (!el) return;
             {   // É sobre HOJE: só aparece quando o período escolhido é o atual
@@ -3565,6 +3876,7 @@
         function renderSmartFeatures() {
             ensureSmartState();
             try { renderSafeToSpend(); } catch (e) { console.warn('safe-to-spend', e); }
+            try { renderDebts(); } catch (e) { console.warn('dividas', e); }
             try { renderSubscriptions(); } catch (e) { console.warn('subs', e); }
             try { renderRules(); } catch (e) { console.warn('rules', e); }
         }
