@@ -807,7 +807,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">23</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">24</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -846,7 +846,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">23</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">24</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -916,13 +916,14 @@
             <select id="debtType" class="w-full px-4 py-3 rounded-xl bg-slate-800 text-sm">
                 <option value="card">Cartão de crédito</option><option value="loan">Empréstimo (Shopee, banco…)</option><option value="payroll">Consignado (desconta no salário)</option><option value="deal">Acordo / renegociação</option><option value="other">Outra</option>
             </select>
-            <div class="grid grid-cols-2 gap-2">
-                <label class="text-[11px] text-slate-400">Valor da parcela<input id="debtParcel" type="number" step="0.01" min="0" required class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+            <div class="grid grid-cols-2 gap-2 items-end">
+                <label class="text-[11px] text-slate-400">Valor da parcela<input id="debtParcel" type="number" step="0.01" min="0" required oninput="updateDebtPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
                 <label class="text-[11px] text-slate-400">Vence todo dia<input id="debtDay" type="number" min="1" max="31" value="10" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
-                <label class="text-[11px] text-slate-400">Total de parcelas<input id="debtTotal_" type="number" min="1" required class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
-                <label class="text-[11px] text-slate-400">Já paguei<input id="debtPaid" type="number" min="0" value="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400">Total de parcelas <span class="text-slate-500">(sem a entrada)</span><input id="debtTotal_" type="number" min="1" required oninput="updateDebtPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400">Parcelas já pagas <span class="text-slate-500">(quantidade)</span><input id="debtPaid" type="number" min="0" value="0" oninput="updateDebtPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
                 <label class="text-[11px] text-slate-400 col-span-2">Juros ao mês (%) — se não souber, deixe em branco<input id="debtRate" type="number" step="0.01" min="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
             </div>
+            <p id="debtPreview" class="text-[12px] font-semibold text-emerald-400 min-h-[18px]"></p>
             <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Salvar</button>
             <button type="button" id="debtDelBtn" onclick="deleteDebt()" class="hidden w-full py-2 text-xs font-semibold text-rose-400">Excluir dívida</button>
         </form>
@@ -1394,7 +1395,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 23;
+        var APP_VERSION = 24;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -3455,7 +3456,20 @@
             document.getElementById('debtPaid').value = d ? d.paid : 0;
             document.getElementById('debtRate').value = d && d.rate ? d.rate : '';
             document.getElementById('debtDelBtn').classList.toggle('hidden', !d);
+            updateDebtPreview();
             document.getElementById('debtModal').classList.remove('hidden');
+        };
+        // Resumo ao vivo: quantas parcelas faltam e quanto isso dá
+        window.updateDebtPreview = function() {
+            const el = document.getElementById('debtPreview'); if (!el) return;
+            const parc = parseFloat(document.getElementById('debtParcel').value) || 0;
+            const total = parseInt(document.getElementById('debtTotal_').value) || 0;
+            const pagas = parseInt(document.getElementById('debtPaid').value) || 0;
+            if (!total) { el.textContent = ''; return; }
+            if (pagas > total) { el.className = 'text-[12px] font-semibold text-rose-400 min-h-[18px]'; el.textContent = `As parcelas pagas (${pagas}) não podem passar do total (${total}). Coloque a quantidade, não o valor.`; return; }
+            const faltam = total - pagas;
+            el.className = 'text-[12px] font-semibold text-emerald-400 min-h-[18px]';
+            el.textContent = faltam ? `Faltam ${faltam} parcela${faltam > 1 ? 's' : ''}${parc ? ' · ' + formatCurrency(faltam * parc) : ''}` : 'Dívida quitada 🎉';
         };
         window.closeDebtModal = () => document.getElementById('debtModal').classList.add('hidden');
         window.saveDebt = function(e) {
@@ -3465,6 +3479,7 @@
                 parcel: parseFloat(document.getElementById('debtParcel').value) || 0, day: parseInt(document.getElementById('debtDay').value) || 10,
                 total: parseInt(document.getElementById('debtTotal_').value) || 1, paid: parseInt(document.getElementById('debtPaid').value) || 0,
                 rate: parseFloat(document.getElementById('debtRate').value) || 0 };
+            if (data.paid > data.total) { alert(`As parcelas pagas (${data.paid}) passam do total (${data.total}). Em "Parcelas já pagas" coloque a quantidade de parcelas, não o valor em reais.`); return; }
             if (id) Object.assign(list.find(x => x.id === id), data); else list.push({ id: 'debt_' + Date.now(), ...data });
             closeDebtModal(); saveAndRefresh(); showToast('Dívida salva');
         };
