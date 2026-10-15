@@ -139,6 +139,24 @@
         #authModal.auth-gate .auth-card { border-color: transparent; box-shadow: none; }
         #authModal .auth-brand { display: none; }
         #authModal.auth-gate .auth-brand { display: block; }
+        /* ===== Dashboard: visual novo ===== */
+        .dark #tab-dashboard section, .dark #tab-dashboard > button { background: linear-gradient(180deg, #151517 0%, #0e0e10 100%); border-color: rgba(255,255,255,.06); border-radius: 26px; }
+        #tab-dashboard .dash-hero { position: relative; overflow: hidden; border-radius: 30px; padding: 22px; color: #fff;
+            background: radial-gradient(120% 90% at 100% 0%, rgba(0,208,132,.45) 0%, rgba(0,208,132,0) 55%),
+                        radial-gradient(90% 80% at 0% 100%, rgba(56,189,248,.18) 0%, rgba(56,189,248,0) 60%),
+                        linear-gradient(160deg, #0f2a20 0%, #0b0f0d 60%, #08090a 100%) !important;
+            border: 1px solid rgba(0,208,132,.22) !important; box-shadow: 0 20px 50px -20px rgba(0,208,132,.35); }
+        #tab-dashboard .dash-hero::after { content: ''; position: absolute; right: -60px; top: -60px; width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(255,255,255,.07); }
+        #tab-dashboard .dash-hero::before { content: ''; position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; border-radius: 50%; border: 1px solid rgba(255,255,255,.06); }
+        .dash-tile { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; padding: 9px 8px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .dash-ico { width: 26px; height: 26px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+        .dash-action { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #a1a1aa; }
+        .dash-action span { width: 54px; height: 54px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+            background: linear-gradient(180deg, #1b1b1e, #121214); border: 1px solid rgba(255,255,255,.07); }
+        .dash-h3 { display: flex; align-items: center; gap: 8px; }
+        .dash-h3 i { width: 26px; height: 26px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; background: rgba(255,255,255,.06); color: #d4d4d8; }
+        #dashGoalsList .bg-emerald-500 { background: linear-gradient(90deg, #00d084, #5ef0bf); box-shadow: 0 0 12px rgba(0,208,132,.45); }
+        .dark #tab-dashboard nav[aria-label="Selecionar período"] { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.06); }
     </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -207,38 +225,6 @@
             <!-- TAB: DASHBOARD -->
             <div id="tab-dashboard" class="space-y-5 max-w-5xl mx-auto">
 
-                <!-- ============ SALDO ============ -->
-                <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-6">
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Saldo atual</p>
-                        <select id="periodTypeFilter" onchange="refreshUI()" aria-label="Tipo de período" class="bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold rounded-full pl-3 pr-2 py-1 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 border-0">
-                            <option value="month">Mensal</option>
-                            <option value="year">Anual</option>
-                        </select>
-                    </div>
-                    <h1 id="dashSaldo" class="sensitive text-[40px] leading-tight sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">R$ 0,00</h1>
-
-                    <div class="grid grid-cols-3 mt-5 pt-4 border-t border-slate-100 dark:border-white/[0.06]">
-                        <div class="min-w-0">
-                            <p class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Receitas</p>
-                            <p id="dashReceitas" class="sensitive text-sm font-semibold text-emerald-500 mt-1 truncate">R$ 0,00</p>
-                        </div>
-                        <div class="min-w-0 pl-3 border-l border-slate-100 dark:border-white/[0.06]">
-                            <p class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Despesas</p>
-                            <p id="dashDespesas" class="sensitive text-sm font-semibold text-rose-500 mt-1 truncate">R$ 0,00</p>
-                            <p id="dashDespesasNote" class="sensitive text-[10px] text-slate-500 truncate"></p>
-                        </div>
-                        <div class="min-w-0 pl-3 border-l border-slate-100 dark:border-white/[0.06]">
-                            <p class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400"><span class="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-white"></span>Investido</p>
-                            <p id="dashInvestido" class="sensitive text-sm font-semibold text-slate-900 dark:text-white mt-1 truncate">R$ 0,00</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ============ QUANTO POSSO GASTAR HOJE ============ -->
-                <section id="safeSpendCard" class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5"></section>
-                <button type="button" id="subsBanner" data-nav="recurring" class="hidden w-full flex items-center gap-3 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-4"></button>
-
                 <!-- ============ SELETOR DE MESES ============ -->
                 <nav class="flex items-center gap-1 bg-white dark:bg-slate-900 rounded-full border border-slate-200/70 dark:border-white/[0.07] p-1.5" aria-label="Selecionar período">
                     <button type="button" onclick="shiftPeriod(-1)" aria-label="Período anterior" class="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
@@ -250,11 +236,71 @@
                     </button>
                 </nav>
 
+
+                <!-- ============ SALDO ============ -->
+                <section class="dash-hero">
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between">
+                            <p class="flex items-center gap-2 text-xs font-medium text-white/70"><i class="fa-solid fa-wallet text-[11px]"></i>Saldo em conta hoje</p>
+                            <select id="periodTypeFilter" onchange="refreshUI()" aria-label="Tipo de período" class="bg-white/10 text-white text-[11px] font-semibold rounded-full pl-3 pr-2 py-1  focus:outline-none focus:ring-1 focus:ring-emerald-500 border-0">
+                            <option value="month">Mensal</option>
+                            <option value="year">Anual</option>
+                        </select>
+                        </div>
+                        <h1 id="dashSaldo" class="sensitive text-[42px] leading-tight font-extrabold tracking-tight text-white mt-2">R$ 0,00</h1>
+                        <p id="dashPeriodLabel" class="mt-4 text-[10px] font-semibold uppercase tracking-[.14em] text-white/50">Movimento do mês</p>
+                        <div class="grid grid-cols-3 gap-2 mt-2">
+                            <div class="dash-tile min-w-0">
+                                <span class="dash-ico bg-emerald-500/20 text-emerald-400"><i class="fa-solid fa-arrow-down"></i></span>
+                                <p class="text-[10px] text-white/60 mt-2">Receitas</p>
+                                <p id="dashReceitas" class="sensitive text-[12px] font-bold tracking-tight text-emerald-400 whitespace-nowrap">R$ 0,00</p>
+                            </div>
+                            <div class="dash-tile min-w-0">
+                                <span class="dash-ico bg-rose-500/20 text-rose-400"><i class="fa-solid fa-arrow-up"></i></span>
+                                <p class="text-[10px] text-white/60 mt-2">Despesas</p>
+                                <p id="dashDespesas" class="sensitive text-[12px] font-bold tracking-tight text-rose-400 whitespace-nowrap">R$ 0,00</p>
+                                <p id="dashDespesasNote" class="sensitive text-[9px] text-white/40 truncate"></p>
+                            </div>
+                            <div class="dash-tile min-w-0">
+                                <span class="dash-ico bg-white/10 text-white"><i class="fa-solid fa-piggy-bank"></i></span>
+                                <p class="text-[10px] text-white/60 mt-2">Sobra</p>
+                                <p id="dashInvestido" class="sensitive text-[12px] font-bold tracking-tight text-white whitespace-nowrap">R$ 0,00</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============ ATALHOS ============ -->
+                <div class="grid grid-cols-4 gap-2 px-1">
+                    <button type="button" onclick="openTransactionModal('income')" class="dash-action"><span class="text-emerald-400"><i class="fa-solid fa-arrow-down"></i></span>Receita</button>
+                    <button type="button" onclick="openTransactionModal('expense')" class="dash-action"><span class="text-rose-400"><i class="fa-solid fa-arrow-up"></i></span>Despesa</button>
+                    <button type="button" onclick="(window.navTo||switchTab)('cards')" class="dash-action"><span class="text-sky-400"><i class="fa-regular fa-credit-card"></i></span>Cartões</button>
+                    <button type="button" onclick="(window.navTo||switchTab)('goals')" class="dash-action"><span class="text-amber-400"><i class="fa-solid fa-bullseye"></i></span>Metas</button>
+                </div>
+
+                <!-- ============ QUANTO POSSO GASTAR HOJE ============ -->
+                <section id="safeSpendCard" class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5"></section>
+                <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
+                    <header class="flex items-center justify-between mb-1">
+                        <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-clock-rotate-left"></i>Últimos lançamentos</h3>
+                        <button type="button" onclick="(window.navTo||switchTab)('transactions')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Ver todos <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
+                    </header>
+                    <div id="dashRecentList"></div>
+                </section>
+                <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
+                    <header class="flex items-center justify-between mb-3">
+                        <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-chart-pie"></i>Para onde foi o dinheiro</h3>
+                        <button type="button" onclick="(window.navTo||switchTab)('reports')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Relatórios <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
+                    </header>
+                    <div id="dashCatList"></div>
+                </section>
+                <button type="button" id="subsBanner" data-nav="recurring" class="hidden w-full flex items-center gap-3 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-4"></button>
+
                 <!-- ============ CARDS DE SEÇÕES ============ -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
                         <header class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold">Contas</h3>
+                            <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-building-columns"></i>Contas</h3>
                             <button type="button" onclick="(window.navTo||switchTab)('accounts')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Ver mais <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
                         </header>
                         <div id="dashAccountsList"></div>
@@ -262,7 +308,7 @@
 
                     <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
                         <header class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold">Cartões</h3>
+                            <h3 class="dash-h3 text-sm font-semibold"><i class="fa-regular fa-credit-card"></i>Cartões</h3>
                             <button type="button" onclick="(window.navTo||switchTab)('cards')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Ver mais <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
                         </header>
                         <div id="dashCardsList"></div>
@@ -270,7 +316,7 @@
 
                     <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
                         <header class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold">Investimentos</h3>
+                            <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-arrow-trend-up"></i>Investimentos</h3>
                             <button type="button" onclick="(window.navTo||switchTab)('investments')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Ver mais <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
                         </header>
                         <div id="dashInvestmentsList"></div>
@@ -278,7 +324,7 @@
 
                     <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
                         <header class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold">Metas</h3>
+                            <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-bullseye"></i>Metas</h3>
                             <button type="button" onclick="(window.navTo||switchTab)('goals')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Ver mais <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
                         </header>
                         <div id="dashGoalsList"></div>
@@ -632,7 +678,7 @@
                     </div>
                 </div>
 
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">20</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">21</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -671,7 +717,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">20</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">21</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1199,7 +1245,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 20;
+        var APP_VERSION = 21;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -2187,12 +2233,10 @@
 
         // Estado vazio: ícone grande centralizado + botão "+ Criar..."
         function dashEmpty(icon, text, btnLabel, onclick) {
-            return `<div class="flex flex-col items-center justify-center text-center py-6">
-                <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
-                    <i class="${icon} text-2xl text-slate-400"></i>
-                </div>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">${text}</p>
-                <button type="button" onclick="${onclick}" class="px-4 py-2 rounded-full bg-emerald-500 text-black text-xs font-semibold hover:brightness-110 transition">+ ${btnLabel}</button>
+            return `<div class="flex items-center gap-3 py-2">
+                <span class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800"><i class="${icon} text-sm text-slate-400"></i></span>
+                <p class="flex-1 min-w-0 text-xs text-slate-500 dark:text-slate-400">${text}</p>
+                ${btnLabel ? `<button type="button" onclick="${onclick}" class="shrink-0 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-500 text-xs font-semibold hover:bg-emerald-500/25 transition">+ Adicionar</button>` : ''}
             </div>`;
         }
 
@@ -2262,7 +2306,15 @@
                 const onCard = window.appState.transactions.filter(t => t.type === 'expense' && cardSet.has(t.account) && t.date.substring(0, compareLength) === selectedPeriodStr).reduce((s, t) => s + t.amount, 0);
                 document.getElementById('dashDespesasNote').textContent = onCard > 0 ? `inclui ${formatCurrency(onCard)} no cartão` : '';
             }
-            document.getElementById('dashInvestido').textContent = formatCurrency(totalInv);
+            {   // Sobra do período = receitas - despesas
+                const sobra = inc - exp, el = document.getElementById('dashInvestido');
+                el.textContent = formatCurrency(sobra);
+                el.classList.toggle('text-rose-500', sobra < 0);
+                el.classList.toggle('text-emerald-500', sobra > 0);
+                const [py, pm] = String(selectedPeriodStr).split('-');
+                document.getElementById('dashPeriodLabel').textContent = periodType === 'month' && pm
+                    ? `Movimento de ${MONTH_NAMES[Number(pm) - 1].toLowerCase()} de ${py}` : `Movimento de ${py}`;
+            }
 
             document.getElementById('accountsGrid').innerHTML = window.appState.accounts.map(a => `<div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] flex items-center gap-3">${bankBadge(a.name, 'fa-solid fa-building-columns', 'bg-emerald-500/15 text-emerald-500')}<div class="min-w-0 flex-1"><h4 class="font-semibold text-sm truncate">${escHTML(a.name)}</h4><p class="sensitive text-lg font-bold ${a.calculatedBalance < 0 ? 'text-rose-500' : 'text-emerald-500'}">${formatCurrency(a.calculatedBalance)}</p>${a.futureCount ? `<p class="sensitive text-[11px] text-slate-500">+ ${a.futureCount} agendado(s): ${a.futureNet >= 0 ? '+' : '−'}${formatCurrency(Math.abs(a.futureNet))}</p>` : ''}</div><button onclick="adjustAccountBalance('${a.id}')" class="px-3 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-500" title="Ajustar saldo"><i class="fa-solid fa-scale-balanced mr-1"></i>Ajustar</button><button onclick="deleteAccount('${a.id}')" class="w-9 h-9 rounded-full text-slate-400 hover:text-rose-500" title="Excluir conta" aria-label="Excluir conta"><i class="fa-solid fa-trash text-sm"></i></button></div>`).join('');
             document.getElementById('categoriesListGrid').innerHTML = window.appState.categories.map(c => `<div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center justify-between"><div class="flex items-center space-x-2 text-sm">${renderCategoryBadge(c)}</div><div class="flex space-x-2"><button onclick="openCategoryModal('${c}')" class="text-slate-400 hover:text-emerald-500"><i class="fa-solid fa-pen text-xs"></i></button><button onclick="deleteCategory('${c}')" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-trash text-xs"></i></button></div></div>`).join('');
@@ -2436,6 +2488,47 @@
             // ================= DASHBOARD: cards de seções =================
             const S = window.appState;
 
+            // Últimos lançamentos do período
+            {
+                const doPeriodo = S.transactions.filter(t => t.date.substring(0, compareLength) === selectedPeriodStr)
+                    .sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+                const CORES = ['#00d084', '#8b5cf6', '#f43f5e', '#f59e0b', '#38bdf8', '#ec4899'];
+                const corDe = c => { let h = 0; for (const ch of String(c || '')) h = (h * 31 + ch.codePointAt(0)) >>> 0; return CORES[h % CORES.length]; };
+                const emoji = c => { const m = String(c || '').match(/^\p{Extended_Pictographic}/u); return m ? m[0] : '💸'; };
+                document.getElementById('dashRecentList').innerHTML = doPeriodo.length
+                    ? `<div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${doPeriodo.map(t => dashRow(
+                        `<span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-base" style="background:${corDe(t.category)}22;border:1px solid ${corDe(t.category)}33">${emoji(t.category)}</span>`,
+                        escHTML(t.desc || 'Sem descrição'),
+                        `${fmtDateBR(t.date).slice(0, 5)} · ${escHTML(String(t.category || '').replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '') || 'Sem categoria')}`,
+                        `<p class="sensitive text-sm font-semibold ${t.type === 'income' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}">${t.type === 'income' ? '+' : '−'} ${formatCurrency(t.amount)}</p>`
+                      )).join('')}</div>`
+                    : dashEmpty('fa-solid fa-receipt', 'Nenhum lançamento neste período', 'Lançar', "openTransactionModal('expense')");
+
+                // Para onde foi o dinheiro: maiores categorias de despesa
+                const porCat = {};
+                S.transactions.forEach(t => { if (t.type === 'expense' && t.date.substring(0, compareLength) === selectedPeriodStr) porCat[t.category || 'Sem categoria'] = (porCat[t.category || 'Sem categoria'] || 0) + t.amount; });
+                const totalCat = Object.values(porCat).reduce((a, b) => a + b, 0);
+                const top = Object.entries(porCat).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                let acc = 0;
+                const fatias = top.map(([c, v], k) => { const a = acc; acc += totalCat > 0 ? v / totalCat * 360 : 0; return `${CORES[k]} ${a}deg ${acc}deg`; }).join(',');
+                document.getElementById('dashCatList').innerHTML = top.length
+                    ? `<div class="flex items-center gap-5">
+                        <div class="relative shrink-0 w-28 h-28 rounded-full" style="background:conic-gradient(${fatias}${acc < 360 ? `,#2c2c2e ${acc}deg 360deg` : ''})">
+                            <div class="absolute inset-[14px] rounded-full bg-[#111113] flex flex-col items-center justify-center">
+                                <span class="text-[10px] text-slate-400">Gastos</span>
+                                <span class="sensitive text-[13px] font-bold">${formatCurrency(totalCat).replace(',00', '')}</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0 space-y-2.5">${top.map(([c, v], k) => { const pct = totalCat > 0 ? Math.round(v / totalCat * 100) : 0; return `
+                            <div class="flex items-center gap-2 text-[13px]">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${CORES[k]}"></span>
+                                <span class="truncate flex-1">${escHTML(String(c).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, ''))}</span>
+                                <span class="sensitive font-semibold shrink-0">${pct}%</span>
+                            </div>`; }).join('')}</div>
+                      </div>`
+                    : dashEmpty('fa-solid fa-chart-pie', 'Sem despesas neste período', '', '');
+            }
+
             // Contas
             document.getElementById('dashAccountsList').innerHTML = S.accounts.length
                 ? dashList(S.accounts, 4, a => {
@@ -2460,7 +2553,7 @@
                         bankBadge(c.name, 'fa-regular fa-credit-card', 'bg-rose-500/15 text-rose-500'),
                         escHTML(c.name),
                         `Vence dia ${escHTML(c.dueDay || c.due || '—')} · ${pct}% do limite`,
-                        `<p class="sensitive text-sm font-semibold text-rose-500">${formatCurrency(cSp)}</p>
+                        `<p class="sensitive text-sm font-semibold ${cSp > 0 ? 'text-rose-500' : 'text-slate-400'}">${formatCurrency(cSp)}</p>
                          <p class="text-[10px] text-slate-400">fatura</p>`
                     );
                 }, 'cards')
@@ -3132,6 +3225,14 @@
         }
         function renderSafeToSpend() {
             const el = document.getElementById('safeSpendCard'); if (!el) return;
+            {   // É sobre HOJE: só aparece quando o período escolhido é o atual
+                const pt = document.getElementById('periodTypeFilter').value;
+                const sel = pt === 'month' ? document.getElementById('globalMonthFilter').value : document.getElementById('globalYearFilter').value;
+                const hoje = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString();
+                const atual = pt === 'month' ? sel === hoje.slice(0, 7) : sel === hoje.slice(0, 4);
+                el.classList.toggle('hidden', !atual);
+                if (!atual) return;
+            }
             const r = computeSafeToSpend(), neg = r.free < 0;
             const dd = fmtDateBR(r.payday).slice(0, 5);
             const untilTxt = r.hasPayday ? `até ${dd} (${escHTML(r.payName || 'próximo recebimento')})` : `até o fim do mês (${dd})`;
