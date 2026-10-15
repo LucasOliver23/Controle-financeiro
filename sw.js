@@ -2,7 +2,7 @@
 // O HTML é SEMPRE buscado na rede primeiro (sem cache do navegador), para o app
 // pegar a versão nova assim que ela é publicada. Sem internet, usa a cópia guardada.
 
-const CACHE_NAME = 'controle-financeiro-pro-v13';
+const CACHE_NAME = 'controle-financeiro-pro-v14';
 const APP_SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {
@@ -25,6 +25,9 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  // versao.json (aviso de nova versão): sempre direto da rede, nunca do cache
+  if (url.origin === self.location.origin && url.pathname.endsWith('/versao.json')) return;
 
   // Páginas (e o próprio index.html): rede primeiro, ignorando o cache HTTP
   if (req.mode === 'navigate' || (url.origin === self.location.origin && /\/(index\.html)?$/.test(url.pathname))) {
