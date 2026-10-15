@@ -157,6 +157,29 @@
         .dash-h3 i { width: 26px; height: 26px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; background: rgba(255,255,255,.06); color: #d4d4d8; }
         #dashGoalsList .bg-emerald-500 { background: linear-gradient(90deg, #00d084, #5ef0bf); box-shadow: 0 0 12px rgba(0,208,132,.45); }
         .dark #tab-dashboard nav[aria-label="Selecionar período"] { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.06); }
+        /* ===== Lançamentos, menu + e Perfil: visual novo ===== */
+        .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { scrollbar-width: none; }
+        .tx-hero { border-radius: 26px; padding: 18px; border: 1px solid rgba(255,255,255,.07);
+            background: radial-gradient(110% 90% at 100% 0%, rgba(56,189,248,.22) 0%, rgba(56,189,248,0) 55%), linear-gradient(160deg, #13161c 0%, #0b0b0d 100%); }
+        .pill-select { appearance: none; -webkit-appearance: none; flex-shrink: 0; padding: 8px 30px 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            background: rgba(255,255,255,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a1a1aa' stroke-width='1.6' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;
+            border: 1px solid rgba(255,255,255,.08); color: #e4e4e7; max-width: 190px; }
+        .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.06); }
+        .seg button { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #a1a1aa; }
+        .seg button.on { background: #00d084; color: #000; }
+        .tx-day { display: flex; align-items: center; justify-content: space-between; padding: 14px 4px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8e8e93; }
+        .tx-card { border-radius: 22px; overflow: hidden; background: linear-gradient(180deg, #151517, #0f0f11); border: 1px solid rgba(255,255,255,.06); }
+        .tx-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; position: relative; }
+        .tx-item + .tx-item::before { content: ''; position: absolute; top: 0; left: 64px; right: 0; height: 1px; background: rgba(255,255,255,.06); }
+        .qa-tile { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; border-radius: 22px; text-align: left;
+            border: 1px solid rgba(255,255,255,.07); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 22%, #141416) 0%, #101012 70%); }
+        .qa-tile .qa-ico { width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 17px; color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); }
+        .qa-tile::after { content: ''; position: absolute; right: -30px; top: -30px; width: 90px; height: 90px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); }
+        .pf-hero { border-radius: 28px; padding: 22px; text-align: center; position: relative; overflow: hidden; border: 1px solid rgba(0,208,132,.2);
+            background: radial-gradient(120% 90% at 50% 0%, rgba(0,208,132,.35) 0%, rgba(0,208,132,0) 60%), linear-gradient(180deg, #0f1f19 0%, #0b0b0d 100%); }
+        .pf-tile { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            background: linear-gradient(180deg, #161618, #0f0f11); border: 1px solid rgba(255,255,255,.06); }
+        .pf-tile .set-icon { width: 40px; height: 40px; border-radius: 14px; font-size: 16px; }
     </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -272,9 +295,9 @@
 
                 <!-- ============ ATALHOS ============ -->
                 <div class="grid grid-cols-4 gap-2 px-1">
-                    <button type="button" onclick="openTransactionModal('income')" class="dash-action"><span class="text-emerald-400"><i class="fa-solid fa-arrow-down"></i></span>Receita</button>
-                    <button type="button" onclick="openTransactionModal('expense')" class="dash-action"><span class="text-rose-400"><i class="fa-solid fa-arrow-up"></i></span>Despesa</button>
+                    <label for="importFile" class="dash-action cursor-pointer"><span class="text-emerald-400"><i class="fa-solid fa-file-import"></i></span>Importar</label>
                     <button type="button" onclick="(window.navTo||switchTab)('cards')" class="dash-action"><span class="text-sky-400"><i class="fa-regular fa-credit-card"></i></span>Cartões</button>
+                    <button type="button" onclick="(window.navTo||switchTab)('recurring')" class="dash-action"><span class="text-violet-400"><i class="fa-solid fa-rotate"></i></span>Fixas</button>
                     <button type="button" onclick="(window.navTo||switchTab)('goals')" class="dash-action"><span class="text-amber-400"><i class="fa-solid fa-bullseye"></i></span>Metas</button>
                 </div>
 
@@ -282,8 +305,8 @@
                 <section id="safeSpendCard" class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5"></section>
                 <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
                     <header class="flex items-center justify-between mb-1">
-                        <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-clock-rotate-left"></i>Últimos lançamentos</h3>
-                        <button type="button" onclick="(window.navTo||switchTab)('transactions')" class="text-xs font-semibold text-emerald-500 hover:text-emerald-400 flex items-center gap-1">Ver todos <i class="fa-solid fa-chevron-right text-[9px]"></i></button>
+                        <h3 class="dash-h3 text-sm font-semibold"><i class="fa-regular fa-calendar-check"></i>Contas a pagar</h3>
+                        <span id="dashPayTotal" class="sensitive text-xs font-semibold text-amber-400"></span>
                     </header>
                     <div id="dashRecentList"></div>
                 </section>
@@ -346,27 +369,48 @@
             </div>
 
             <!-- TAB: TRANSAÇÕES -->
-            <div id="tab-transactions" class="space-y-6 max-w-7xl mx-auto hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] shadow-sm overflow-hidden">
-                    <div class="p-6 border-b border-slate-200/70 dark:border-white/[0.07] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div id="tab-transactions" class="space-y-3 max-w-3xl mx-auto hidden">
+                <section class="tx-hero">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="font-bold text-lg text-slate-900 dark:text-white">Livro Razão (Extrato)</h3>
-                            <p class="text-xs text-slate-500">Pesquise e filtre todas as suas movimentações</p>
+                            <h3 class="font-bold text-lg text-white">Extrato</h3>
+                            <p id="txCount" class="text-[11px] text-white/50"></p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <input type="text" id="searchInput" oninput="filterTransactions()" placeholder="Pesquisar..." class="w-full sm:w-40 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white">
-                            <select id="filterAccount" onchange="filterTransactions()" class="py-2 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white"><option value="all">Todas as contas</option></select>
-                            <select id="filterMonth" onchange="filterTransactions()" class="py-2 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
-                                <option value="all">Todos os meses</option><option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
-                            </select>
-                            <select id="filterYear" onchange="filterTransactions()" class="py-2 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
-                                <option value="all">Todos os anos</option><option value="2026">2026</option>
-                            </select>
-                            <select id="filterSource" onchange="filterTransactions()" class="max-w-full py-2 px-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white"><option value="all">Todas as origens</option></select>
-                            <button id="txSelectBtn" onclick="toggleTxSelectMode(true)" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg text-xs font-semibold transition"><i class="fa-regular fa-square-check mr-1"></i>Selecionar</button>
-                            <button onclick="exportDataCSV()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg text-xs font-semibold transition" title="Exportar CSV" aria-label="Exportar CSV"><i class="fa-solid fa-download"></i></button>
+                        <div class="flex items-center gap-2">
+                            <button id="txSelectBtn" onclick="toggleTxSelectMode(true)" class="w-9 h-9 rounded-full bg-white/10 text-white/80 flex items-center justify-center" aria-label="Selecionar"><i class="fa-regular fa-square-check text-sm"></i></button>
+                            <button onclick="exportDataCSV()" class="w-9 h-9 rounded-full bg-white/10 text-white/80 flex items-center justify-center" aria-label="Exportar CSV"><i class="fa-solid fa-download text-sm"></i></button>
                         </div>
                     </div>
+                    <div class="grid grid-cols-3 gap-2 mt-4">
+                        <div class="dash-tile"><p class="text-[10px] text-white/60">Entradas</p><p id="txSumIn" class="sensitive text-[13px] font-bold text-emerald-400 whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="dash-tile"><p class="text-[10px] text-white/60">Saídas</p><p id="txSumOut" class="sensitive text-[13px] font-bold text-rose-400 whitespace-nowrap">R$ 0,00</p></div>
+                        <div class="dash-tile"><p class="text-[10px] text-white/60">Resultado</p><p id="txSumNet" class="sensitive text-[13px] font-bold text-white whitespace-nowrap">R$ 0,00</p></div>
+                    </div>
+                </section>
+
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="filterTransactions()" placeholder="Buscar lançamento ou categoria" class="w-full pl-11 pr-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.07] text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40">
+                </div>
+
+                <div class="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
+                    <select id="filterMonth" onchange="filterTransactions()" class="pill-select">
+                                <option value="all">Todos os meses</option><option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
+                            </select>
+                    <select id="filterYear" onchange="filterTransactions()" class="pill-select">
+                                <option value="all">Todos os anos</option><option value="2026">2026</option>
+                            </select>
+                    <select id="filterAccount" onchange="filterTransactions()" class="pill-select"><option value="all">Todas as contas</option></select>
+                    <select id="filterSource" onchange="filterTransactions()" class="pill-select"><option value="all">Todas as origens</option></select>
+                </div>
+
+                <div class="seg" role="tablist" aria-label="Tipo">
+                    <button type="button" data-txtype="all" class="on" onclick="setTxType('all')">Todos</button>
+                    <button type="button" data-txtype="income" onclick="setTxType('income')">Entradas</button>
+                    <button type="button" data-txtype="expense" onclick="setTxType('expense')">Saídas</button>
+                    <button type="button" data-txtype="pending" onclick="setTxType('pending')">A pagar</button>
+                </div>
+
                     <!-- Barra de seleção em massa -->
                     <div id="txBulkBar" class="hidden sticky top-0 z-10 px-4 sm:px-6 py-3 bg-emerald-500/10 border-b border-emerald-500/30 flex flex-wrap items-center gap-2">
                         <span id="txSelCount" class="text-sm font-semibold mr-auto">0 selecionado(s)</span>
@@ -374,25 +418,9 @@
                         <button id="txDelSelBtn" onclick="deleteSelectedTx()" class="px-3 py-2 rounded-lg text-xs font-bold bg-rose-500 text-white"><i class="fa-solid fa-trash mr-1"></i>Excluir</button>
                         <button onclick="toggleTxSelectMode(false)" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-500">Cancelar</button>
                     </div>
-                    <p id="txCount" class="px-6 pt-3 text-[11px] text-slate-400"></p>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200/70 dark:border-white/[0.07] text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                    <th id="txSelectHead" class="hidden py-3 pl-4 pr-0 w-10"></th>
-                                    <th class="py-3 px-6">Descrição</th>
-                                    <th class="py-3 px-6">Conta</th>
-                                    <th class="py-3 px-6">Categoria</th>
-                                    <th class="py-3 px-6">Data</th>
-                                    <th class="py-3 px-6 text-right">Valor</th>
-                                    <th class="py-3 px-6 text-center">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactionTableBody" class="divide-y divide-slate-50 dark:divide-slate-800/50 text-sm"></tbody>
-                        </table>
-                    </div>
-                    <div id="emptyState" class="hidden py-16 text-center"><h4 class="font-medium text-slate-400">Nenhuma transação encontrada</h4></div>
-                </div>
+
+                <div id="transactionTableBody"></div>
+                <div id="emptyState" class="hidden py-16 text-center"><i class="fa-solid fa-receipt text-3xl text-slate-600"></i><h4 class="font-medium text-slate-400 mt-3">Nenhum lançamento encontrado</h4></div>
             </div>
 
             <!-- ===================== TAB: RELATÓRIOS ===================== -->
@@ -625,7 +653,7 @@
                 <!-- ---------- TELA PRINCIPAL ---------- -->
                 <div id="profileMain" class="space-y-6">
                     <!-- Cabeçalho -->
-                    <div class="flex flex-col items-center text-center pt-2">
+                    <div class="pf-hero flex flex-col items-center">
                         <div class="relative">
                             <div id="profileAvatarPreview" class="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 overflow-hidden text-3xl font-bold ring-4 ring-white dark:ring-white/[0.06]">
                                 <i class="fa-solid fa-user"></i>
@@ -652,21 +680,19 @@
                 </div>
                 <div>
                     <h3 class="set-title">Finanças</h3>
-                    <div class="set-group">
-                        <button type="button" data-nav="accounts" class="set-row"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-building-columns"></i></span><span class="set-label">Contas</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" data-nav="cards" class="set-row"><span class="set-icon" style="--c:#f43f5e"><i class="fa-regular fa-credit-card"></i></span><span class="set-label">Cartões</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" data-nav="recurring" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Recorrentes</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" data-nav="investments" class="set-row"><span class="set-icon" style="--c:#8b5cf6"><i class="fa-solid fa-arrow-trend-up"></i></span><span class="set-label">Investimentos</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" data-nav="goals" class="set-row"><span class="set-icon" style="--c:#f59e0b"><i class="fa-solid fa-bullseye"></i></span><span class="set-label">Metas</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" data-nav="budgets" class="set-row"><span class="set-icon" style="--c:#06b6d4"><i class="fa-solid fa-sliders"></i></span><span class="set-label">Limites</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <button type="button" data-nav="accounts" class="pf-tile"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-building-columns"></i></span>Contas</button>
+                        <button type="button" data-nav="cards" class="pf-tile"><span class="set-icon" style="--c:#f43f5e"><i class="fa-regular fa-credit-card"></i></span>Cartões</button>
+                        <button type="button" data-nav="recurring" class="pf-tile"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span>Fixas</button>
+                        <button type="button" data-nav="investments" class="pf-tile"><span class="set-icon" style="--c:#8b5cf6"><i class="fa-solid fa-arrow-trend-up"></i></span>Investimentos</button>
+                        <button type="button" data-nav="goals" class="pf-tile"><span class="set-icon" style="--c:#f59e0b"><i class="fa-solid fa-bullseye"></i></span>Metas</button>
+                        <button type="button" data-nav="budgets" class="pf-tile"><span class="set-icon" style="--c:#06b6d4"><i class="fa-solid fa-sliders"></i></span>Limites</button>
                     </div>
                 </div>
                 <div>
                     <h3 class="set-title">Organização</h3>
                     <div class="set-group">
                         <button type="button" data-nav="categories" class="set-row"><span class="set-icon" style="--c:#ec4899"><i class="fa-solid fa-layer-group"></i></span><span class="set-label">Categorias</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" onclick="showToast('Subcategorias: em breve!')" class="set-row"><span class="set-icon" style="--c:#a855f7"><i class="fa-solid fa-sitemap"></i></span><span class="set-label">Subcategorias</span><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.08] text-slate-500 dark:text-slate-400">Em breve</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" onclick="showToast('Etiquetas: em breve!')" class="set-row"><span class="set-icon" style="--c:#14b8a6"><i class="fa-solid fa-tags"></i></span><span class="set-label">Etiquetas</span><span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.08] text-slate-500 dark:text-slate-400">Em breve</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                     </div>
                 </div>
                 <div>
@@ -674,11 +700,13 @@
                     <div class="set-group">
                         <label for="importFile" class="set-row"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-file-import"></i></span><span class="set-label">Importar extrato</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></label>
                         <button type="button" onclick="exportDataCSV()" class="set-row"><span class="set-icon" style="--c:#3b82f6"><i class="fa-solid fa-file-export"></i></span><span class="set-label">Exportar dados</span><span class="text-xs text-slate-400 mr-1">CSV</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
-                        <button type="button" onclick="openAuthModal()" class="set-row"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                     </div>
                 </div>
 
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">21</span></p>
+                <div class="set-group">
+                        <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
+                </div>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">22</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -717,7 +745,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">21</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">22</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -753,21 +781,21 @@
                 <button type="button" onclick="closeQuickAdd()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="grid grid-cols-2 gap-3 pb-2">
-                <button type="button" onclick="closeQuickAdd(); openTransactionModal('expense')" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/70 dark:border-white/[0.06] text-left hover:border-rose-500/50 transition">
-                    <span class="w-9 h-9 rounded-full bg-rose-500/15 text-rose-500 flex items-center justify-center mb-3"><i class="fa-solid fa-arrow-down"></i></span>
-                    <span class="block text-sm font-semibold">Despesa</span>
+                <button type="button" onclick="closeQuickAdd(); openTransactionModal('expense')" class="qa-tile" style="--c:#f43f5e">
+                    <span class="qa-ico"><i class="fa-solid fa-arrow-up"></i></span>
+                    <span><span class="block text-sm font-bold">Despesa</span><span class="block text-[11px] text-slate-400 mt-0.5">Gasto à vista ou no cartão</span></span>
                 </button>
-                <button type="button" onclick="closeQuickAdd(); openTransactionModal('income')" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/70 dark:border-white/[0.06] text-left hover:border-emerald-500/50 transition">
-                    <span class="w-9 h-9 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center mb-3"><i class="fa-solid fa-arrow-up"></i></span>
-                    <span class="block text-sm font-semibold">Receita</span>
+                <button type="button" onclick="closeQuickAdd(); openTransactionModal('income')" class="qa-tile" style="--c:#00d084">
+                    <span class="qa-ico"><i class="fa-solid fa-arrow-down"></i></span>
+                    <span><span class="block text-sm font-bold">Receita</span><span class="block text-[11px] text-slate-400 mt-0.5">Salário, Pix recebido…</span></span>
                 </button>
-                <button type="button" onclick="closeQuickAdd(); openInstallmentModal()" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/70 dark:border-white/[0.06] text-left hover:border-indigo-500/50 transition">
-                    <span class="w-9 h-9 rounded-full bg-indigo-500/15 text-indigo-400 flex items-center justify-center mb-3"><i class="fa-regular fa-credit-card"></i></span>
-                    <span class="block text-sm font-semibold">Parcelada</span>
+                <button type="button" onclick="closeQuickAdd(); openInstallmentModal()" class="qa-tile" style="--c:#8b5cf6">
+                    <span class="qa-ico"><i class="fa-regular fa-credit-card"></i></span>
+                    <span><span class="block text-sm font-bold">Parcelada</span><span class="block text-[11px] text-slate-400 mt-0.5">Compra em várias vezes</span></span>
                 </button>
-                <label onclick="closeQuickAdd()" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/70 dark:border-white/[0.06] text-left hover:border-emerald-500/50 transition cursor-pointer">
-                    <span class="w-9 h-9 rounded-full bg-slate-500/15 text-slate-500 dark:text-slate-300 flex items-center justify-center mb-3"><i class="fa-solid fa-file-import"></i></span>
-                    <span class="block text-sm font-semibold">Importar extrato</span>
+                <label onclick="closeQuickAdd()" class="qa-tile cursor-pointer" style="--c:#38bdf8">
+                    <span class="qa-ico"><i class="fa-solid fa-file-import"></i></span>
+                    <span><span class="block text-sm font-bold">Importar extrato</span><span class="block text-[11px] text-slate-400 mt-0.5">OFX, CSV ou PDF do banco</span></span>
                     <input type="file" id="importFile" accept=".ofx,.csv,.json,.pdf,application/pdf,text/csv,application/json,application/x-ofx,application/octet-stream" onchange="importExtratoBancario(event)" class="hidden">
                 </label>
             </div>
@@ -1245,7 +1273,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 21;
+        var APP_VERSION = 22;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -2488,21 +2516,23 @@
             // ================= DASHBOARD: cards de seções =================
             const S = window.appState;
 
-            // Últimos lançamentos do período
+            // Contas a pagar: despesas lançadas e ainda não pagas (sem conta), atrasadas primeiro
             {
-                const doPeriodo = S.transactions.filter(t => t.date.substring(0, compareLength) === selectedPeriodStr)
-                    .sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
                 const CORES = ['#00d084', '#8b5cf6', '#f43f5e', '#f59e0b', '#38bdf8', '#ec4899'];
-                const corDe = c => { let h = 0; for (const ch of String(c || '')) h = (h * 31 + ch.codePointAt(0)) >>> 0; return CORES[h % CORES.length]; };
-                const emoji = c => { const m = String(c || '').match(/^\p{Extended_Pictographic}/u); return m ? m[0] : '💸'; };
-                document.getElementById('dashRecentList').innerHTML = doPeriodo.length
-                    ? `<div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${doPeriodo.map(t => dashRow(
-                        `<span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-base" style="background:${corDe(t.category)}22;border:1px solid ${corDe(t.category)}33">${emoji(t.category)}</span>`,
-                        escHTML(t.desc || 'Sem descrição'),
-                        `${fmtDateBR(t.date).slice(0, 5)} · ${escHTML(String(t.category || '').replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '') || 'Sem categoria')}`,
-                        `<p class="sensitive text-sm font-semibold ${t.type === 'income' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}">${t.type === 'income' ? '+' : '−'} ${formatCurrency(t.amount)}</p>`
-                      )).join('')}</div>`
-                    : dashEmpty('fa-solid fa-receipt', 'Nenhum lançamento neste período', 'Lançar', "openTransactionModal('expense')");
+                const hojeISO = isoDate(new Date());
+                const pend = S.transactions.filter(t => t.type === 'expense' && !t.account).sort((a, b) => a.date.localeCompare(b.date));
+                const totalPend = pend.reduce((a, t) => a + t.amount, 0);
+                document.getElementById('dashPayTotal').textContent = pend.length ? formatCurrency(totalPend) : '';
+                document.getElementById('dashRecentList').innerHTML = pend.length
+                    ? `<div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${pend.slice(0, 4).map(t => {
+                        const atrasada = t.date < hojeISO, hoje = t.date === hojeISO;
+                        return dashRow(
+                            `<span class="w-10 h-10 rounded-2xl shrink-0 flex flex-col items-center justify-center leading-none ${atrasada ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400'}"><span class="text-[13px] font-bold">${t.date.slice(8, 10)}</span><span class="text-[9px] uppercase">${MONTH_SHORT[Number(t.date.slice(5, 7)) - 1]}</span></span>`,
+                            escHTML(t.desc || 'Sem descrição'),
+                            atrasada ? '<span class="text-rose-400 font-semibold">Atrasada</span>' : hoje ? '<span class="text-amber-400 font-semibold">Vence hoje</span>' : `Vence ${fmtDateBR(t.date).slice(0, 5)}`,
+                            `<p class="sensitive text-sm font-semibold">${formatCurrency(t.amount)}</p><button type="button" onclick="openPayModal('${t.id}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">Pagar</button>`
+                        ); }).join('')}</div>${pend.length > 4 ? `<button type="button" onclick="(window.navTo||switchTab)('transactions')" class="w-full pt-2 text-[11px] font-medium text-slate-400">+${pend.length - 4} pendentes · ver em Lançamentos</button>` : ''}`
+                    : `<div class="flex items-center gap-3 py-2"><span class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center bg-emerald-500/15 text-emerald-400"><i class="fa-solid fa-check"></i></span><p class="text-xs text-slate-400">Nada pendente. Tudo pago! 🎉</p></div>`;
 
                 // Para onde foi o dinheiro: maiores categorias de despesa
                 const porCat = {};
@@ -2649,23 +2679,59 @@
             // Remove da seleção o que sumiu da lista
             [...txSel.ids].forEach(id => { if (!window.appState.transactions.some(t => t.id === id)) txSel.ids.delete(id); });
 
-            document.getElementById('txSelectHead').classList.toggle('hidden', !txSel.active);
-            document.getElementById('txCount').textContent = `${filtered.length} lançamento(s)`;
-            const tbody = document.getElementById('transactionTableBody'), empty = document.getElementById('emptyState');
-            tbody.innerHTML = '';
+            // Tipo (Todos / Entradas / Saídas / A pagar)
+            const tipo = window.__txType || 'all';
+            const lista = filtered.filter(t => tipo === 'all' || (tipo === 'pending' ? (t.type === 'expense' && !t.account) : t.type === tipo));
+            txSel.visible = lista.map(t => t.id);
+            const ent = filtered.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
+            const sai = filtered.filter(t => t.type !== 'income').reduce((a, t) => a + t.amount, 0);
+            document.getElementById('txSumIn').textContent = formatCurrency(ent);
+            document.getElementById('txSumOut').textContent = formatCurrency(sai);
+            const net = document.getElementById('txSumNet'); net.textContent = formatCurrency(ent - sai);
+            net.className = `sensitive text-[13px] font-bold whitespace-nowrap ${ent - sai < 0 ? 'text-rose-400' : 'text-white'}`;
+            document.getElementById('txCount').textContent = `${lista.length} lançamento(s)`;
+            const box = document.getElementById('transactionTableBody'), empty = document.getElementById('emptyState');
             updateTxBulkBar();
-            if (filtered.length === 0) { empty.classList.remove('hidden'); return; }
+            if (lista.length === 0) { box.innerHTML = ''; empty.classList.remove('hidden'); return; }
             empty.classList.add('hidden');
-            filtered.forEach(t => {
-                const isInc = t.type === 'income', checked = txSel.ids.has(t.id);
-                let bankBtn = isInc ? `<span class="text-xs text-slate-400">${escHTML(t.account||'Pendente')}</span>` : (t.account ? `<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium">${escHTML(t.account)}</span>` : `<button onclick="openPayModal('${t.id}')" class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-[10px] font-bold">Pagar</button>`);
-                const tr = document.createElement('tr');
-                if (txSel.active) { tr.className = 'cursor-pointer ' + (checked ? 'bg-emerald-500/10' : ''); tr.onclick = e => { if (e.target.closest('button')) return; toggleTxSelect(t.id); }; }
-                tr.innerHTML = (txSel.active ? `<td class="py-3 pl-4 pr-0 w-10"><input type="checkbox" ${checked ? 'checked' : ''} class="w-4 h-4 accent-emerald-500 pointer-events-none" aria-label="Selecionar"></td>` : '')
-                    + `<td class="py-3 px-6 font-medium">${escHTML(t.desc)}</td><td class="py-3 px-6">${bankBtn}</td><td class="py-3 px-6"><button type="button" onclick="openCatEdit('${t.id}')" class="inline-flex items-center gap-1 rounded-lg hover:ring-2 hover:ring-emerald-500/40 transition" title="Alterar categoria">${renderCategoryBadge(t.category)}<i class="fa-solid fa-pen text-[9px] text-slate-400"></i></button></td><td class="py-3 px-6 text-xs text-slate-400">${new Date(t.date+'T12:00:00').toLocaleDateString('pt-BR')}</td><td class="py-3 px-6 text-right font-semibold whitespace-nowrap ${isInc ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200'}">${isInc ? '' : '-'} ${formatCurrency(t.amount)}</td><td class="py-3 px-6 text-center"><button onclick="deleteTransaction('${t.id}')" class="text-slate-300 hover:text-rose-500 transition" aria-label="Excluir"><i class="fa-solid fa-trash text-xs"></i></button></td>`;
-                tbody.appendChild(tr);
-            });
+
+            const CORES = ['#00d084', '#8b5cf6', '#f43f5e', '#f59e0b', '#38bdf8', '#ec4899'];
+            const corDe = c => { let h = 0; for (const ch of String(c || '')) h = (h * 31 + ch.codePointAt(0)) >>> 0; return CORES[h % CORES.length]; };
+            const emoji = c => { const m = String(c || '').match(/^\p{Extended_Pictographic}/u); return m ? m[0] : '💸'; };
+            const semEmoji = c => String(c || '').replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '') || 'Sem categoria';
+            const hojeISO = isoDate(new Date()), ontemISO = isoDate(new Date(Date.now() - 86400000));
+            const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const rotulo = d => d === hojeISO ? 'Hoje' : d === ontemISO ? 'Ontem' : `${DIAS[new Date(d + 'T12:00:00').getDay()]}, ${d.slice(8, 10)} ${MONTH_SHORT[Number(d.slice(5, 7)) - 1]}`;
+
+            const grupos = [];
+            lista.forEach(t => { const g = grupos[grupos.length - 1]; if (g && g.d === t.date) g.itens.push(t); else grupos.push({ d: t.date, itens: [t] }); });
+            box.innerHTML = grupos.map(g => {
+                const saldoDia = g.itens.reduce((a, t) => a + (t.type === 'income' ? t.amount : -t.amount), 0);
+                return `<div class="tx-day"><span>${rotulo(g.d)}</span><span class="sensitive normal-case tracking-normal font-semibold ${saldoDia < 0 ? 'text-slate-400' : 'text-emerald-400'}">${saldoDia < 0 ? '−' : '+'} ${formatCurrency(Math.abs(saldoDia))}</span></div>
+                <div class="tx-card">${g.itens.map(t => {
+                    const isInc = t.type === 'income', pend = !isInc && !t.account, checked = txSel.ids.has(t.id), cor = corDe(t.category);
+                    return `<div class="tx-item ${txSel.active ? 'cursor-pointer' : ''} ${checked ? 'bg-emerald-500/10' : ''}" ${txSel.active ? `onclick="toggleTxSelect('${t.id}')"` : ''}>
+                        ${txSel.active ? `<input type="checkbox" ${checked ? 'checked' : ''} class="w-4 h-4 accent-emerald-500 pointer-events-none shrink-0" aria-label="Selecionar">` : ''}
+                        <span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-base" style="background:${cor}22;border:1px solid ${cor}33">${emoji(t.category)}</span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium leading-snug line-clamp-2">${escHTML(t.desc)}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5 truncate">
+                                <button type="button" onclick="event.stopPropagation(); openCatEdit('${t.id}')" class="hover:text-emerald-400">${escHTML(semEmoji(t.category))} <i class="fa-solid fa-pen text-[8px] opacity-60"></i></button>${t.account ? ` · ${escHTML(t.account)}` : ''}
+                            </p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="sensitive text-sm font-semibold whitespace-nowrap ${isInc ? 'text-emerald-400' : 'text-white'}">${isInc ? '+' : '−'} ${formatCurrency(t.amount)}</p>
+                            ${pend ? `<button type="button" onclick="event.stopPropagation(); openPayModal('${t.id}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400 text-[11px] font-semibold">Pagar</button>` : ''}
+                        </div>
+                        ${txSel.active ? '' : `<button type="button" onclick="event.stopPropagation(); if (confirm('Excluir este lançamento?')) deleteTransaction('${t.id}')" class="w-7 h-7 shrink-0 rounded-full text-slate-600 hover:text-rose-500 flex items-center justify-center" aria-label="Excluir"><i class="fa-solid fa-trash text-[11px]"></i></button>`}
+                    </div>`; }).join('')}</div>`;
+            }).join('');
         }
+        window.setTxType = function(t) {
+            window.__txType = t;
+            document.querySelectorAll('[data-txtype]').forEach(b => b.classList.toggle('on', b.dataset.txtype === t));
+            filterTransactions();
+        };
 
         function updateTxBulkBar() {
             const bar = document.getElementById('txBulkBar'), n = txSel.ids.size;
