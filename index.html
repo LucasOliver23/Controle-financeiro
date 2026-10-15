@@ -624,7 +624,7 @@
                     </div>
                 </div>
 
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">18</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">19</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -663,7 +663,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">18</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">19</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1186,7 +1186,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 18;
+        var APP_VERSION = 19;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1260,7 +1260,7 @@
     <!-- SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
@@ -1576,7 +1576,7 @@
         window.openAuthModal = function() {
             if (window.innerWidth < 768) closeMobileSidebar();
             if (currentUser && !currentUser.isAnonymous) {
-                if (confirm('Deseja sair? Seus dados continuam salvos na nuvem.')) { clearTimeout(pushTimer); pushToCloud().finally(() => signOut(auth).then(() => { SYNC_KEYS.forEach(k => localStorage.removeItem(`df_${k}`)); ['df_owner_uid','df_updated_at'].forEach(k => localStorage.removeItem(k)); currentUser = null; updateAuthUI(null); window.location.reload(); })); }
+                if (confirm('Deseja sair? Seus dados continuam salvos na nuvem.')) { clearTimeout(pushTimer); pushToCloud().finally(() => signOut(auth).then(() => { if (window.AndroidApp && AndroidApp.googleSignOut) AndroidApp.googleSignOut(); SYNC_KEYS.forEach(k => localStorage.removeItem(`df_${k}`)); ['df_owner_uid','df_updated_at'].forEach(k => localStorage.removeItem(k)); currentUser = null; updateAuthUI(null); window.location.reload(); })); }
                 return;
             }
             authMode = 'signup'; toggleAuthMode(); document.getElementById('authModal').classList.remove('hidden');
@@ -1611,8 +1611,21 @@
         };
         const authMsg = err => AUTH_ERRORS[err && err.code] || (err && err.message) || 'Erro desconhecido.';
 
+        // No app Android (WebView) o Google bloqueia o login por popup/redirect: o app faz o login
+        // nativo (Credential Manager) e devolve o token em onNativeGoogleLogin.
+        window.onNativeGoogleLogin = async function(idToken) {
+            try {
+                currentUser = (await signInWithCredential(auth, GoogleAuthProvider.credential(idToken))).user;
+                updateAuthUI(currentUser); closeAuthModal(); showToast('Conectado com Google!');
+            } catch (err) { alert('Não foi possível entrar com Google: ' + authMsg(err)); }
+        };
+        window.onNativeGoogleLoginError = function(msg) {
+            if (msg !== 'cancelado') alert('Não foi possível entrar com Google: ' + msg);
+        };
+
         window.handleGoogleAuth = async function() {
             if (!auth) { alert('Login indisponível: sem conexão com o Firebase.'); return; }
+            if (window.AndroidApp && AndroidApp.googleSignIn) { AndroidApp.googleSignIn(); return; }
             const provider = new GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
             try {
@@ -1685,7 +1698,7 @@
         window.deleteGoal = id => { if(confirm('Remover esta meta?')) { window.appState.goals = window.appState.goals.filter(g=>g.id!==id); saveAndRefresh(); } }
         window.deleteCategory = n => { if (confirm(`Excluir categoria "${n}"?`)) { window.appState.categories = window.appState.categories.filter(c => c !== n); if (window.appState.categoryImages) delete window.appState.categoryImages[n]; delete window.appState.budgets[n]; saveAndRefresh(); } }
 
-        window.exportDataCSV = () => { let csv = "ID,Descricao,Categoria,Data,Conta,Tipo,Valor\r\n"; window.appState.transactions.forEach(t => csv += `${t.id},"${t.desc}","${t.category}",${t.date},"${t.account||''}",${t.type},${t.amount}\r\n`); const dl = document.createElement('a'); dl.href = encodeURI("data:text/csv;charset=utf-8," + csv); dl.download = "transacoes.csv"; dl.click(); }
+        window.exportDataCSV = () => { let csv = "ID,Descricao,Categoria,Data,Conta,Tipo,Valor\r\n"; window.appState.transactions.forEach(t => csv += `${t.id},"${t.desc}","${t.category}",${t.date},"${t.account||''}",${t.type},${t.amount}\r\n`); const dl = document.createElement('a'); if (window.AndroidApp && AndroidApp.saveFile) { AndroidApp.saveFile("transacoes.csv", "text/csv", btoa(unescape(encodeURIComponent(csv)))); return; } dl.href = encodeURI("data:text/csv;charset=utf-8," + csv); dl.download = "transacoes.csv"; dl.click(); }
         
         // ================= IMPORTAÇÃO DE EXTRATOS =================
         // Correções: (1) ignora as linhas de resumo do PDF ("Entradas: R$ … • Saídas: R$ …"),
@@ -3338,13 +3351,21 @@
             document.getElementById('summaryModal').classList.remove('hidden');
         };
         window.closeMonthSummary = () => document.getElementById('summaryModal').classList.add('hidden');
+        // No app Android: o WebView não tem navigator.share nem baixa blob:, então o app faz isso
+        function sendBlobToApp(blob, name, method) {
+            const r = new FileReader();
+            r.onload = () => AndroidApp[method](name, blob.type || 'application/octet-stream', String(r.result).split(',')[1]);
+            r.readAsDataURL(blob);
+        }
         window.shareMonthSummary = async function() {
             if (!summaryBlob) return;
+            if (window.AndroidApp && AndroidApp.shareFile) { sendBlobToApp(summaryBlob, summaryName, 'shareFile'); return; }
             try { await navigator.share({ files: [new File([summaryBlob], summaryName, { type: 'image/png' })], title: 'Resumo financeiro' }); }
             catch (e) { if (e.name !== 'AbortError') downloadMonthSummary(); }
         };
         window.downloadMonthSummary = function() {
             if (!summaryBlob) return;
+            if (window.AndroidApp && AndroidApp.saveFile) { sendBlobToApp(summaryBlob, summaryName, 'saveFile'); return; }
             const a = document.createElement('a'); a.href = URL.createObjectURL(summaryBlob); a.download = summaryName;
             document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
             showToast('Imagem salva');

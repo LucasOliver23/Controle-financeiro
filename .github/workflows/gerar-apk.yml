@@ -1,18 +1,23 @@
 name: Gerar APK
 
-# Gera o APK do app Android (TWA, o mesmo tipo de APK do PWABuilder) a partir de android/twa-manifest.json.
-# O APK só abre https://controlo-financeiro-pro-3.vercel.app, então as versões novas do site chegam
-# sozinhas no app. Só é preciso gerar outro APK se mudar o nome, o ícone ou o endereço.
+# Gera o app Android nativo (pasta app-android/): ele mostra o site
+# https://controlo-financeiro-pro-3.vercel.app em tela cheia, sem barra de endereço e sem o
+# aviso do Chrome. As versões novas do site chegam sozinhas no app; só é preciso gerar outro
+# APK quando mudar algo na pasta app-android/ (por isso roda sozinho só nesse caso).
 #
-# Para rodar: aba Actions -> "Gerar APK" -> Run workflow.
 # O APK fica em Releases (link fixo: .../releases/latest/download/ControleFinanceiro.apk).
 #
 # Secrets necessários (Settings -> Secrets and variables -> Actions):
-#   ANDROID_KEYSTORE_BASE64  conteúdo do arquivo .keystore em base64
+#   ANDROID_KEYSTORE_BASE64    conteúdo do arquivo .keystore em base64
 #   ANDROID_KEYSTORE_PASSWORD  senha do keystore (a mesma vale para a chave)
 # Use sempre a mesma chave: com outra chave o Android não instala o APK por cima do anterior.
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'app-android/**'
+      - '.github/workflows/gerar-apk.yml'
   workflow_dispatch:
 
 permissions:
@@ -24,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Conferir secrets
+      - name: Restaurar a chave de assinatura
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -33,69 +38,40 @@ jobs:
             echo "::error::Cadastre ANDROID_KEYSTORE_BASE64 e ANDROID_KEYSTORE_PASSWORD em Settings -> Secrets and variables -> Actions."
             exit 1
           fi
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/controlefinanceiro.keystore"
+          echo "CF_KEYSTORE=$RUNNER_TEMP/controlefinanceiro.keystore" >> "$GITHUB_ENV"
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-        with:
-          # Versões que o Bubblewrap 1.27 usa (build-tools 36.1.0, compileSdk 36)
-          packages: 'platform-tools build-tools;36.1.0 platforms;android-36'
+      - uses: gradle/actions/setup-gradle@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Instalar Bubblewrap
-        run: npm install -g @bubblewrap/cli@1.27.0
-
-      - name: Preparar projeto
+      - name: Compilar o APK assinado
+        working-directory: app-android
         env:
-          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          CF_KEYSTORE_SENHA: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          # Sempre maior que o anterior (o APK antigo pelo Chrome chegou ao código 4)
+          CF_VERSION_CODE: ${{ github.run_number }}0
+          CF_VERSION_NAME: 2.${{ github.run_number }}
         run: |
-          mkdir -p ~/.bubblewrap build-apk
-          # O Bubblewrap exige uma pasta bin/ na raiz do SDK; no runner ela fica em cmdline-tools/<versão>/bin
-          if [ ! -e "$ANDROID_HOME/bin" ]; then
-            ln -s "$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin | tail -1)" "$ANDROID_HOME/bin"
-          fi
-          ls -d "$ANDROID_HOME/build-tools/36.1.0" "$ANDROID_HOME/platforms/android-36"
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
-          echo "$KS" | base64 -d > build-apk/android.keystore
-          VERSAO=$(python3 -c "import json; print(json.load(open('versao.json'))['versao'])")
-          python3 - "$VERSAO" "${{ github.run_number }}" <<'EOF'
-          import json, sys
-          versao, run = sys.argv[1], int(sys.argv[2])
-          m = json.load(open('android/twa-manifest.json'))
-          m['appVersionCode'] = run
-          m['appVersion'] = f'{versao}.{run}'
-          json.dump(m, open('build-apk/twa-manifest.json', 'w'), indent=2)
-          print('versionCode', run, '| versionName', m['appVersion'])
-          EOF
-
-      - name: Gerar e assinar APK
-        working-directory: build-apk
-        env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        run: |
-          bubblewrap update --skipVersionUpgrade < /dev/null
-          bubblewrap build < /dev/null
-          cp app-release-signed.apk ControleFinanceiro.apk
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/ControleFinanceiro.apk"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ControleFinanceiro-apk
-          path: build-apk/ControleFinanceiro.apk
+          path: ${{ runner.temp }}/ControleFinanceiro.apk
 
       - name: Publicar em Releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="apk-${{ github.run_number }}"
-          gh release create "$TAG" build-apk/ControleFinanceiro.apk \
+          TAG="app-${{ github.run_number }}"
+          gh release create "$TAG" "$RUNNER_TEMP/ControleFinanceiro.apk" \
             --target "${{ github.sha }}" \
-            --title "APK Controle Financeiro Pro (build ${{ github.run_number }})" \
-            --notes "Instale pelo celular: baixe ControleFinanceiro.apk e abra o arquivo." \
+            --title "Controle Financeiro (app ${{ github.run_number }})" \
+            --notes "Instale pelo celular: baixe ControleFinanceiro.apk e abra o arquivo. Instala por cima da versão anterior, sem perder nada." \
             --latest
