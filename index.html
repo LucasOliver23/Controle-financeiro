@@ -807,7 +807,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">24</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">25</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -846,7 +846,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">24</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">25</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -921,6 +921,7 @@
                 <label class="text-[11px] text-slate-400">Vence todo dia<input id="debtDay" type="number" min="1" max="31" value="10" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
                 <label class="text-[11px] text-slate-400">Total de parcelas <span class="text-slate-500">(sem a entrada)</span><input id="debtTotal_" type="number" min="1" required oninput="updateDebtPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
                 <label class="text-[11px] text-slate-400">Parcelas já pagas <span class="text-slate-500">(quantidade)</span><input id="debtPaid" type="number" min="0" value="0" oninput="updateDebtPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400 col-span-2">Primeira parcela em <span class="text-slate-500">(só se ainda não começou)</span><input id="debtStart" type="month" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
                 <label class="text-[11px] text-slate-400 col-span-2">Juros ao mês (%) — se não souber, deixe em branco<input id="debtRate" type="number" step="0.01" min="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
             </div>
             <p id="debtPreview" class="text-[12px] font-semibold text-emerald-400 min-h-[18px]"></p>
@@ -1395,7 +1396,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 24;
+        var APP_VERSION = 25;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -3422,15 +3423,20 @@
         const debtLeft = d => Math.max(0, (Number(d.total) || 0) - (Number(d.paid) || 0));
         const ymAdd = (ym, n) => { const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1 + n, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
         const ymNome = ym => { const [y, m] = ym.split('-'); return `${MONTH_NAMES[Number(m) - 1]} de ${y}`; };
+        const ymDiff = (a, b) => { const [ya, ma] = a.split('-').map(Number), [yb, mb] = b.split('-').map(Number); return (ya - yb) * 12 + (ma - mb); };
+        // Quantos meses até a 1ª parcela (0 = já está pagando)
+        const debtOffset = (d, thisYM) => d.start && /^\d{4}-\d{2}$/.test(d.start) ? Math.max(0, ymDiff(d.start, thisYM)) : 0;
+        const debtActiveNow = (d, thisYM) => debtLeft(d) > 0 && debtOffset(d, thisYM) <= 1;
 
         // Simula mês a mês: paga as parcelas; o extra + parcelas de dívidas já quitadas vão para a dívida "da vez"
         function simulateDebts(debts, strategy, extra) {
-            const ds = debts.filter(d => debtLeft(d) > 0).map(d => ({ id: d.id, parcel: Number(d.parcel) || 0, rate: Number(d.rate) || 0, rest: debtLeft(d) * (Number(d.parcel) || 0) }));
+            const thisYM = isoDate(new Date()).slice(0, 7);
+            const ds = debts.filter(d => debtLeft(d) > 0).map(d => ({ id: d.id, parcel: Number(d.parcel) || 0, rate: Number(d.rate) || 0, rest: debtLeft(d) * (Number(d.parcel) || 0), off: debtOffset(d, thisYM) }));
             const ends = {}; let month = 0, freed = 0;
-            const ordem = () => ds.filter(d => d.rest > 0.005).sort((a, b) => strategy === 'snowball' ? a.rest - b.rest : (b.rate - a.rate) || (a.rest - b.rest));
+            const ordem = () => ds.filter(d => d.rest > 0.005 && month >= d.off).sort((a, b) => strategy === 'snowball' ? a.rest - b.rest : (b.rate - a.rate) || (a.rest - b.rest));
             while (ds.some(d => d.rest > 0.005) && month < 600) {
                 month++;
-                ds.forEach(d => { if (d.rest > 0.005) d.rest -= Math.min(d.parcel, d.rest); });
+                ds.forEach(d => { if (d.rest > 0.005 && month >= d.off) d.rest -= Math.min(d.parcel, d.rest); });
                 let pool = extra + freed;
                 for (const t of ordem()) { const u = Math.min(pool, t.rest); t.rest -= u; pool -= u; if (pool <= 0) break; }
                 ds.forEach(d => { if (d.rest <= 0.005 && !ends[d.id]) { ends[d.id] = month; freed += d.parcel; } });
@@ -3455,6 +3461,7 @@
             document.getElementById('debtTotal_').value = d ? d.total : '';
             document.getElementById('debtPaid').value = d ? d.paid : 0;
             document.getElementById('debtRate').value = d && d.rate ? d.rate : '';
+            document.getElementById('debtStart').value = d && d.start ? d.start : '';
             document.getElementById('debtDelBtn').classList.toggle('hidden', !d);
             updateDebtPreview();
             document.getElementById('debtModal').classList.remove('hidden');
@@ -3478,7 +3485,7 @@
             const data = { name: document.getElementById('debtName').value.trim(), type: document.getElementById('debtType').value,
                 parcel: parseFloat(document.getElementById('debtParcel').value) || 0, day: parseInt(document.getElementById('debtDay').value) || 10,
                 total: parseInt(document.getElementById('debtTotal_').value) || 1, paid: parseInt(document.getElementById('debtPaid').value) || 0,
-                rate: parseFloat(document.getElementById('debtRate').value) || 0 };
+                rate: parseFloat(document.getElementById('debtRate').value) || 0, start: document.getElementById('debtStart').value || '' };
             if (data.paid > data.total) { alert(`As parcelas pagas (${data.paid}) passam do total (${data.total}). Em "Parcelas já pagas" coloque a quantidade de parcelas, não o valor em reais.`); return; }
             if (id) Object.assign(list.find(x => x.id === id), data); else list.push({ id: 'debt_' + Date.now(), ...data });
             closeDebtModal(); saveAndRefresh(); showToast('Dívida salva');
@@ -3497,8 +3504,10 @@
             const sim = simulateDebts(S.debts, plan.strategy, Number(plan.extra) || 0);
             const totalDevo = ativos.reduce((a, d) => a + debtLeft(d) * d.parcel, 0);
             const totalOrig = S.debts.reduce((a, d) => a + (Number(d.total) || 0) * (Number(d.parcel) || 0), 0);
-            const mensal = ativos.reduce((a, d) => a + Number(d.parcel), 0);
-            const folha = ativos.filter(d => d.type === 'payroll').reduce((a, d) => a + Number(d.parcel), 0);
+            const agora = ativos.filter(d => debtActiveNow(d, thisYM)), futuras = ativos.filter(d => !debtActiveNow(d, thisYM));
+            const mensal = agora.reduce((a, d) => a + Number(d.parcel), 0);
+            const mensalFuturo = ativos.reduce((a, d) => a + Number(d.parcel), 0);
+            const folha = agora.filter(d => d.type === 'payroll').reduce((a, d) => a + Number(d.parcel), 0);
             const entradas = S.recurring.filter(r => r.type === 'income');
             const rendaCaixa = entradas.reduce((a, r) => a + (Number(r.amount) || 0), 0);
             const rendaBruta = rendaCaixa + folha;
@@ -3513,7 +3522,8 @@
             document.getElementById('debtFreeSub').textContent = ativos.length ? `daqui a ${sim.months} ${sim.months === 1 ? 'mês' : 'meses'}, seguindo o plano` : '';
             const pago = totalOrig > 0 ? Math.round((1 - totalDevo / totalOrig) * 100) : 0;
             document.getElementById('debtProgressBar').style.width = pago + '%';
-            document.getElementById('debtProgressTxt').textContent = `${pago}% do caminho já percorrido`;
+            document.getElementById('debtProgressTxt').textContent = `${pago}% do caminho já percorrido` + (futuras.length
+                ? ` · parcelas sobem para ${fmt(mensalFuturo)}/mês em ${ymNome(futuras.map(d => d.start).sort().pop()).toLowerCase()}` : '');
             document.getElementById('debtTotal').textContent = fmt(totalDevo);
             document.getElementById('debtMonthly').textContent = fmt(mensal);
             const pe = document.getElementById('debtPct'); pe.textContent = rendaBruta ? pct + '%' : '—';
@@ -3528,7 +3538,7 @@
             } else {
                 const contas = [
                     ...S.recurring.filter(r => r.type === 'expense').map(r => ({ nome: r.desc, v: Number(r.amount) || 0, dia: Number(r.day) || 1 })),
-                    ...ativos.filter(d => d.type !== 'payroll').map(d => ({ nome: d.name, v: Number(d.parcel), dia: Number(d.day) || 1 }))
+                    ...agora.filter(d => d.type !== 'payroll').map(d => ({ nome: d.name, v: Number(d.parcel), dia: Number(d.day) || 1 }))
                 ];
                 const periodos = dias.map((d, i) => {
                     const fim = dias[(i + 1) % dias.length];
@@ -3588,7 +3598,7 @@
                             <div class="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full" style="width:${pc}%;background:${t[2]}"></div></div>
                             <span class="text-[10px] text-slate-400 shrink-0">${d.paid}/${d.total}</span>
                         </div>
-                        <div class="flex items-center gap-2 mt-2 pl-[52px] flex-wrap">${tag}${fim ? `<span class="text-[10px] text-slate-400">termina em ${fim.toLowerCase()}</span>` : ''}
+                        <div class="flex items-center gap-2 mt-2 pl-[52px] flex-wrap">${tag}${debtOffset(d, thisYM) > 1 ? `<span class="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-semibold">começa em ${ymNome(d.start).toLowerCase()}</span>` : ''}${fim ? `<span class="text-[10px] text-slate-400">termina em ${fim.toLowerCase()}</span>` : ''}
                             ${left && d.type !== 'payroll' ? `<button type="button" onclick="payDebtInstallment('${d.id}')" class="ml-auto px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">Paguei a parcela</button>` : ''}</div>
                     </div>`; }).join('')
                 : `<p class="text-xs text-slate-400 py-2">Comece cadastrando cada dívida: cartão, empréstimos, acordos e consignado.</p>`;
@@ -3597,7 +3607,7 @@
             const caras = ativos.filter(d => (Number(d.rate) || 0) >= 5 || d.type === 'card');
             const reserva = S.goals.find(g => /reserva|emerg/i.test(g.name || ''));
             const temReserva = reserva && (Number(reserva.totalSaved) || Number(reserva.saved) || 0) >= (plan.reserveGoal || 500);
-            const fecha = (() => { const e = entradas.reduce((a, r) => a + Number(r.amount), 0); const o = S.recurring.filter(r => r.type === 'expense').reduce((a, r) => a + Number(r.amount), 0) + ativos.filter(d => d.type !== 'payroll').reduce((a, d) => a + Number(d.parcel), 0); return e > 0 && e - o >= 0; })();
+            const fecha = (() => { const e = entradas.reduce((a, r) => a + Number(r.amount), 0); const o = S.recurring.filter(r => r.type === 'expense').reduce((a, r) => a + Number(r.amount), 0) + agora.filter(d => d.type !== 'payroll').reduce((a, d) => a + Number(d.parcel), 0); return e > 0 && e - o >= 0; })();
             const etapas = [
                 ['Colocar tudo no papel', 'Cadastrar dívidas, recebimentos e contas fixas.', S.debts.length > 0 && entradas.length > 0],
                 ['Parar de afundar', 'O mês precisa fechar no azul, sem pegar empréstimo novo.', fecha],
