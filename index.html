@@ -808,7 +808,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">26</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">27</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -847,7 +847,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">26</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">27</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1047,7 +1047,9 @@
             <form onsubmit="handleBudgetSubmit(event)" class="space-y-4">
                 <select id="budgetCategory" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
                 <input type="number" step="0.01" id="budgetLimit" required placeholder="Limite R$" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400">
+                <p id="budgetHint" class="hidden text-[12px] text-slate-400"></p>
                 <button type="submit" class="w-full py-2.5 bg-slate-900 dark:bg-emerald-500 text-white dark:text-black rounded-lg text-sm font-semibold hover:opacity-90 transition">Salvar</button>
+                            <button type="button" id="budgetDelBtn" onclick="removeBudget()" class="hidden w-full py-2 text-xs font-semibold text-rose-400">Remover limite</button>
             </form>
         </div>
     </div>
@@ -1397,7 +1399,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 26;
+        var APP_VERSION = 27;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1741,7 +1743,7 @@
         window.closePayModal = () => document.getElementById('payModal').classList.add('hidden');
         window.confirmPayment = () => { const tx = window.appState.transactions.find(t=>t.id===document.getElementById('payTxId').value); if(tx) tx.account = document.getElementById('payAccountSelect').value; closePayModal(); saveAndRefresh(); showToast('Pago!'); }
         
-        window.openBudgetModal = function(catName = null) { 
+        window.openBudgetModal = function(catName = null, media = null) { 
             document.getElementById('budgetModal').classList.remove('hidden'); 
             const sel = document.getElementById('budgetCategory'); 
             sel.innerHTML=''; 
@@ -1753,6 +1755,16 @@
             } else {
                 document.getElementById('budgetLimit').value = '';
             }
+            const tem = !!(catName && window.appState.budgets[catName]);
+            document.getElementById('budgetDelBtn').classList.toggle('hidden', !tem);
+            const hint = document.getElementById('budgetHint');
+            hint.classList.toggle('hidden', !media);
+            if (media) hint.innerHTML = `Sua média nos últimos 3 meses: <b class="text-white">~${formatCurrency(media)}</b>. Para economizar, tente um valor um pouco menor a cada mês.`;
+        }
+        window.removeBudget = function() {
+            const c = document.getElementById('budgetCategory').value;
+            if (!window.appState.budgets[c] || !confirm('Remover o limite desta categoria?')) return;
+            delete window.appState.budgets[c]; closeBudgetModal(); saveAndRefresh(); showToast('Limite removido');
         }
         window.closeBudgetModal = () => document.getElementById('budgetModal').classList.add('hidden');
         window.openRecurringModal = () => { document.getElementById('recurringModal').classList.remove('hidden'); const sel = document.getElementById('recCategory'); sel.innerHTML=''; window.appState.categories.forEach(c=>{sel.innerHTML+=`<option value="${c}">${c}</option>`}); }
@@ -3593,7 +3605,7 @@
                 tip.innerHTML = falta.length && maior
                     ? `<div class="rounded-2xl p-3 bg-amber-400/10 border border-amber-400/20 text-[12px] text-amber-100"><b>💡 É aqui que você entra no vermelho.</b> Quando cair o dinheiro do dia ${maior.d}, separe <b class="sensitive">${fmt(falta.reduce((a, p) => a + (p.saiV - p.entV), 0))}</b> para as contas ${falta.map(p => `do dia ${p.d} em diante`).join(' e ')}. Sem isso, você precisa pegar emprestado antes do próximo recebimento.</div>`
                     : '';
-                tip.innerHTML += `<p class="text-[11px] mt-2 ${sobraMes < 0 ? 'text-rose-400' : 'text-slate-400'}">No mês inteiro: ${sobraMes < 0 ? 'faltam' : 'sobram'} <b class="sensitive">${fmt(Math.abs(sobraMes))}</b> depois das contas fixas, parcelas${usaMedia ? ' e do dia a dia' : ''}${sobraMes < 0 ? ' — o plano não fecha; corte gastos ou renegocie' : ' para mercado, transporte e o resto'}.</p>`;
+                tip.innerHTML += `<p class="text-[11px] mt-2 ${sobraMes < 0 ? 'text-rose-400' : 'text-slate-400'}">No mês inteiro: ${sobraMes < 0 ? 'faltam' : 'sobram'} <b class="sensitive">${fmt(Math.abs(sobraMes))}</b> depois das contas fixas, parcelas${usaMedia ? ' e do dia a dia' : ''}${sobraMes < 0 ? ' — o plano não fecha; corte gastos ou renegocie' : (usaMedia ? ' livres para a mini reserva ou para adiantar a dívida da vez' : ' para mercado, transporte e o resto')}.</p>`;
             }
 
             // ----- Gastos do dia a dia (média) -----
@@ -3612,7 +3624,7 @@
                             <div class="flex items-center gap-2 py-2 text-[13px]">
                                 <span class="flex-1 min-w-0 truncate">${escHTML(c)}</span>
                                 <span class="sensitive font-semibold">~${fmt(v)}</span>
-                                ${S.budgets[c] ? `<span class="text-[10px] text-emerald-400 w-16 text-right">limite ${fmt(S.budgets[c]).replace(',00', '')}</span>` : `<button type="button" onclick='setBudgetFromAvg(${JSON.stringify(c)}, ${v.toFixed(2)})' class="w-16 shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold">Limitar</button>`}
+                                ${S.budgets[c] ? `<button type="button" onclick='openBudgetModal(${JSON.stringify(c)}, ${v.toFixed(2)})' class="shrink-0 px-2 py-0.5 rounded-full bg-white/[0.06] text-emerald-400 text-[10px] font-semibold whitespace-nowrap">${fmt(S.budgets[c]).replace(',00', '')} <i class="fa-solid fa-pen text-[8px] opacity-70"></i></button>` : `<button type="button" onclick='setBudgetFromAvg(${JSON.stringify(c)}, ${v.toFixed(2)})' class="w-16 shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold">Limitar</button>`}
                             </div>`).join('')}</div>
                         <label class="flex items-center gap-2 mt-2 text-[11px] text-slate-300"><input type="checkbox" ${plan.useAvg !== false ? 'checked' : ''} onchange="setDebtPlan({useAvg: this.checked})" class="accent-emerald-500">Considerar essa média no plano</label>
                     </div>`;
