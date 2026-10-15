@@ -40,6 +40,9 @@ jobs:
           java-version: '17'
 
       - uses: android-actions/setup-android@v3
+        with:
+          # Versões que o Bubblewrap 1.27 usa (build-tools 36.1.0, compileSdk 36)
+          packages: 'platform-tools build-tools;36.1.0 platforms;android-36'
 
       - uses: actions/setup-node@v4
         with:
