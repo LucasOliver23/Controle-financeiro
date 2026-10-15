@@ -133,9 +133,17 @@
         .set-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.25); transition: transform .2s; }
         .set-switch[aria-checked="true"] { background: var(--accent); }
         .set-switch[aria-checked="true"]::after { transform: translateX(20px); }
+        /* Login obrigatório (sem modo convidado): o modal de login vira a tela inicial do app */
+        #authModal.auth-gate { background: #000; backdrop-filter: none; -webkit-backdrop-filter: none; align-items: center; padding: 16px; }
+        #authModal.auth-gate .auth-close { display: none; }
+        #authModal.auth-gate .auth-card { border-color: transparent; box-shadow: none; }
+        #authModal .auth-brand { display: none; }
+        #authModal.auth-gate .auth-brand { display: block; }
     </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden transition-colors duration-300">
+    <div id="appSplash" style="position:fixed;inset:0;z-index:80;background:#000;display:flex;align-items:center;justify-content:center"><img src="icon-192.png" alt="" style="width:72px;height:72px;border-radius:18px"></div>
+    <script>setTimeout(function () { var s = document.getElementById('appSplash'); if (s) s.remove(); }, 6000);</script>
 
     <!--
         STUBS DE COMPATIBILIDADE — a Sidebar foi removida, mas o <script> original
@@ -624,7 +632,7 @@
                     </div>
                 </div>
 
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">19</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">20</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -663,7 +671,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">19</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">20</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1044,10 +1052,15 @@
     </div>
 
     <div id="authModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-sm w-full max-h-[92dvh] overflow-y-auto p-6 space-y-5 shadow-2xl border border-slate-200 dark:border-white/[0.08]" style="padding-bottom: calc(24px + env(safe-area-inset-bottom))">
+        <div class="auth-card bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-sm w-full max-h-[92dvh] overflow-y-auto p-6 space-y-5 shadow-2xl border border-slate-200 dark:border-white/[0.08]" style="padding-bottom: calc(24px + env(safe-area-inset-bottom))">
+            <div class="auth-brand text-center">
+                <img src="icon-192.png" alt="" class="w-16 h-16 mx-auto rounded-2xl mb-3">
+                <h2 class="text-2xl font-bold">Controle Financeiro</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Entre na sua conta para acessar seus dados</p>
+            </div>
             <div class="flex items-center justify-between">
                 <h3 id="authModalTitle" class="font-bold text-xl">Entrar</h3>
-                <button type="button" onclick="closeAuthModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="closeAuthModal()" class="auth-close w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400 -mt-3">Entre para salvar seus dados na nuvem e usar em qualquer aparelho.</p>
 
@@ -1068,7 +1081,7 @@
                 <p class="text-center text-xs text-slate-500 dark:text-slate-400"><span id="authSwitchHint">Não tem conta?</span> <button type="button" onclick="toggleAuthMode()" id="authToggleModeBtn" class="font-semibold text-emerald-500">Criar conta</button></p>
             </form>
 
-            <button type="button" onclick="handleAnonymousAuth()" class="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-300 transition">Continuar sem conta (dados só neste aparelho)</button>
+            <p class="text-center text-[11px] text-slate-500 dark:text-slate-400">Seus dados ficam salvos na sua conta e você não perde nada ao trocar de celular.</p>
         </div>
     </div>
 
@@ -1186,7 +1199,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 19;
+        var APP_VERSION = 20;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1276,14 +1289,16 @@
             });
             onAuthStateChanged(auth, (user) => {
                 currentUser = user; updateAuthUI(user);
-                if (user && !user.isAnonymous) { if (syncedUid !== user.uid) pullFromCloud(user); }
-                else { cloudReady = false; syncedUid = null; }
+                const splash = document.getElementById('appSplash'); if (splash) splash.remove();
+                if (user && !user.isAnonymous) { window.closeAuthModal(); if (syncedUid !== user.uid) pullFromCloud(user); }
+                else { cloudReady = false; syncedUid = null; window.showLoginGate(); }
             });
             // Conclui o login do Google quando ele volta por redirecionamento
             getRedirectResult(auth).then(r => { if (r && r.user) { closeAuthModal(); showToast('Conectado com Google!'); } })
                 .catch(err => { if (err && err.code !== 'auth/no-auth-event') console.warn('Google redirect:', err.code); });
         } catch (e) { 
             console.error("Firebase init warning:", e); 
+            const splash = document.getElementById('appSplash'); if (splash) splash.remove();
         }
 
         window.appState = {
@@ -1581,7 +1596,17 @@
             }
             authMode = 'signup'; toggleAuthMode(); document.getElementById('authModal').classList.remove('hidden');
         }
-        window.closeAuthModal = () => document.getElementById('authModal').classList.add('hidden');
+        // Sem conta conectada o app só mostra o login (não há modo convidado)
+        window.showLoginGate = function() {
+            const m = document.getElementById('authModal');
+            if (!m.classList.contains('auth-gate')) { authMode = 'signup'; toggleAuthMode(); }
+            m.classList.add('auth-gate'); m.classList.remove('hidden');
+        };
+        window.closeAuthModal = function() {
+            const m = document.getElementById('authModal');
+            if (m.classList.contains('auth-gate') && !(currentUser && !currentUser.isAnonymous)) return;
+            m.classList.remove('auth-gate'); m.classList.add('hidden');
+        };
         window.toggleAuthMode = function() {
             authMode = authMode === 'login' ? 'signup' : 'login';
             document.getElementById('authModalTitle').textContent = authMode === 'signup' ? 'Criar Conta' : 'Entrar';
@@ -1591,7 +1616,6 @@
             document.getElementById('authSwitchHint').textContent = authMode === 'login' ? 'Não tem conta?' : 'Já tem conta?';
             document.getElementById('authPassword').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
         }
-        window.handleAnonymousAuth = () => { closeAuthModal(); showToast('Modo Local ativo'); }
         window.handlePasswordReset = async () => { 
             const e = document.getElementById('authEmail').value.trim(); 
             if(!e){alert('Preencha o e-mail');return;} 
