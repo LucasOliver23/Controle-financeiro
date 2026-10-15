@@ -56,6 +56,11 @@ jobs:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           mkdir -p ~/.bubblewrap build-apk
+          # O Bubblewrap exige uma pasta bin/ na raiz do SDK; no runner ela fica em cmdline-tools/<versão>/bin
+          if [ ! -e "$ANDROID_HOME/bin" ]; then
+            ln -s "$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin | tail -1)" "$ANDROID_HOME/bin"
+          fi
+          ls -d "$ANDROID_HOME/build-tools/36.1.0" "$ANDROID_HOME/platforms/android-36"
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$ANDROID_HOME" > ~/.bubblewrap/config.json
           echo "$KS" | base64 -d > build-apk/android.keystore
           VERSAO=$(python3 -c "import json; print(json.load(open('versao.json'))['versao'])")
