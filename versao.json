@@ -1,4 +1,4 @@
 {
-  "versao": 18,
-  "notas": "Agora o app avisa sozinho quando sai uma versão nova. Toque em Atualizar agora para recebê-la."
+  "versao": 20,
+  "notas": "Agora o app pede login ao abrir (sem modo convidado) e funciona como app nativo no Android."
 }
