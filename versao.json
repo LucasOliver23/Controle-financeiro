@@ -1,4 +1,4 @@
 {
-  "versao": 18,
-  "notas": "Agora o app avisa sozinho quando sai uma versão nova. Toque em Atualizar agora para recebê-la."
+  "versao": 19,
+  "notas": "App Android nativo: abre direto, sem aviso do Chrome, com login do Google pelo próprio celular."
 }
