@@ -686,6 +686,7 @@
                     <h3 class="dash-h3 text-sm font-semibold"><i class="fa-regular fa-calendar"></i>Seu mês de verdade</h3>
                     <p class="text-[11px] text-slate-400 mt-1">O dinheiro chega em datas diferentes. Veja quanto entra e sai em cada período.</p>
                     <div id="debtCycle" class="mt-3 space-y-2.5"></div>
+                    <div id="debtDaily" class="mt-3"></div>
                     <div id="debtCycleTip" class="mt-3"></div>
                 </section>
 
@@ -807,7 +808,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">25</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">26</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -846,7 +847,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">25</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">26</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1396,7 +1397,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 25;
+        var APP_VERSION = 26;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -3429,7 +3430,7 @@
         const debtActiveNow = (d, thisYM) => debtLeft(d) > 0 && debtOffset(d, thisYM) <= 1;
 
         // Simula mês a mês: paga as parcelas; o extra + parcelas de dívidas já quitadas vão para a dívida "da vez"
-        function simulateDebts(debts, strategy, extra) {
+        function simulateDebts(debts, strategy, extra, roll = true) {
             const thisYM = isoDate(new Date()).slice(0, 7);
             const ds = debts.filter(d => debtLeft(d) > 0).map(d => ({ id: d.id, parcel: Number(d.parcel) || 0, rate: Number(d.rate) || 0, rest: debtLeft(d) * (Number(d.parcel) || 0), off: debtOffset(d, thisYM) }));
             const ends = {}; let month = 0, freed = 0;
@@ -3437,7 +3438,7 @@
             while (ds.some(d => d.rest > 0.005) && month < 600) {
                 month++;
                 ds.forEach(d => { if (d.rest > 0.005 && month >= d.off) d.rest -= Math.min(d.parcel, d.rest); });
-                let pool = extra + freed;
+                let pool = extra + (roll ? freed : 0);
                 for (const t of ordem()) { const u = Math.min(pool, t.rest); t.rest -= u; pool -= u; if (pool <= 0) break; }
                 ds.forEach(d => { if (d.rest <= 0.005 && !ends[d.id]) { ends[d.id] = month; freed += d.parcel; } });
             }
@@ -3496,12 +3497,39 @@
             S_().debts = S_().debts.filter(x => x.id !== id); closeDebtModal(); saveAndRefresh();
         };
 
+        // Média mensal dos gastos do dia a dia (últimos 3 meses fechados), sem parcelas de dívidas nem o que já está em Fixas
+        function dailySpendAvg(S, thisYM) {
+            const meses = [1, 2, 3].map(k => ymAdd(thisYM, -k));
+            const debtWords = S.debts.map(d => String(d.name || '').toLowerCase().split(/\s+/)[0]).filter(w => w.length > 2);
+            const fixas = S.recurring.filter(r => r.type === 'expense').map(r => String(r.desc || '').toLowerCase()).filter(Boolean);
+            const porCat = {}, comDados = new Set();
+            S.transactions.forEach(t => {
+                const ym = String(t.date || '').slice(0, 7);
+                if (!meses.includes(ym) || t.type === 'income') return;
+                comDados.add(ym);
+                const desc = String(t.desc || '').toLowerCase();
+                if (!t.account) return;                                            // pendente (parcela a pagar)
+                if (/[\(\[]\s*\d+\s*\/\s*\d+\s*[\)\]]/.test(desc)) return;   // parcela "(1/3)" ou "[2/6]"
+                if (/empr[ée]stimo|consignado|acordo|fatura|parcela/.test(desc)) return;
+                if (debtWords.some(w => desc.includes(w)) || fixas.some(f => desc.includes(f))) return;
+                const c = t.category || 'Sem categoria'; porCat[c] = (porCat[c] || 0) + t.amount;
+            });
+            const n = Math.max(1, comDados.size);
+            const cats = Object.entries(porCat).map(([c, v]) => [c, v / n]).sort((a, b) => b[1] - a[1]);
+            return { cats, total: cats.reduce((a, [, v]) => a + v, 0), meses: comDados.size, de: meses[meses.length - 1], ate: meses[0] };
+        }
+        window.setBudgetFromAvg = function(cat, v) {
+            const lim = Math.ceil(v / 10) * 10; S_().budgets[cat] = lim;
+            saveAndRefresh(); showToast(`Limite de ${formatCurrency(lim)} criado para ${String(cat).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '')}`);
+        };
+
         function renderDebts() {
             const S = S_(); if (!document.getElementById('tab-debts')) return;
             if (!S.debts) S.debts = []; if (!S.debtPlan) S.debtPlan = { strategy: 'avalanche', extra: 0, reserveGoal: 500 };
             const plan = S.debtPlan, ativos = S.debts.filter(d => debtLeft(d) > 0);
             const thisYM = isoDate(new Date()).slice(0, 7);
             const sim = simulateDebts(S.debts, plan.strategy, Number(plan.extra) || 0);
+            const simNormal = simulateDebts(S.debts, plan.strategy, 0, false);
             const totalDevo = ativos.reduce((a, d) => a + debtLeft(d) * d.parcel, 0);
             const totalOrig = S.debts.reduce((a, d) => a + (Number(d.total) || 0) * (Number(d.parcel) || 0), 0);
             const agora = ativos.filter(d => debtActiveNow(d, thisYM)), futuras = ativos.filter(d => !debtActiveNow(d, thisYM));
@@ -3519,7 +3547,9 @@
             if (sub) sub.textContent = ativos.length ? `${fmt(mensal)}/mês em parcelas · livre em ${ymNome(ymAdd(thisYM, sim.months)).toLowerCase()}` : 'Monte seu plano e veja o dia da liberdade';
 
             document.getElementById('debtFreeDate').textContent = ativos.length ? ymNome(ymAdd(thisYM, sim.months)) : (S.debts.length ? 'Você está livre! 🎉' : 'Cadastre suas dívidas');
-            document.getElementById('debtFreeSub').textContent = ativos.length ? `daqui a ${sim.months} ${sim.months === 1 ? 'mês' : 'meses'}, seguindo o plano` : '';
+            document.getElementById('debtFreeSub').textContent = ativos.length
+                ? `daqui a ${sim.months} ${sim.months === 1 ? 'mês' : 'meses'}, antecipando com o que for sobrando` + (simNormal.months > sim.months ? ` · sem antecipar: ${ymNome(ymAdd(thisYM, simNormal.months)).toLowerCase()}` : '')
+                : '';
             const pago = totalOrig > 0 ? Math.round((1 - totalDevo / totalOrig) * 100) : 0;
             document.getElementById('debtProgressBar').style.width = pago + '%';
             document.getElementById('debtProgressTxt').textContent = `${pago}% do caminho já percorrido` + (futuras.length
@@ -3540,19 +3570,22 @@
                     ...S.recurring.filter(r => r.type === 'expense').map(r => ({ nome: r.desc, v: Number(r.amount) || 0, dia: Number(r.day) || 1 })),
                     ...agora.filter(d => d.type !== 'payroll').map(d => ({ nome: d.name, v: Number(d.parcel), dia: Number(d.day) || 1 }))
                 ];
+                const media = dailySpendAvg(S, thisYM), usaMedia = plan.useAvg !== false && media.total > 0;
                 const periodos = dias.map((d, i) => {
                     const fim = dias[(i + 1) % dias.length];
+                    const nDias = dias.length === 1 ? 30 : (d < fim ? fim - d : 30 - d + fim);
+                    const diaADia = usaMedia ? media.total * nDias / 30 : 0;
                     const dentro = x => dias.length === 1 ? true : (d < fim ? x >= d && x < fim : x >= d || x < fim);
                     const ent = entradas.filter(r => (Number(r.day) || 1) === d);
                     const sai = contas.filter(c => dentro(c.dia));
-                    return { d, fim, ent, entV: ent.reduce((a, r) => a + Number(r.amount), 0), sai, saiV: sai.reduce((a, c) => a + c.v, 0) };
+                    return { d, fim, ent, entV: ent.reduce((a, r) => a + Number(r.amount), 0), sai, diaADia, saiV: sai.reduce((a, c) => a + c.v, 0) + diaADia };
                 });
                 cyc.innerHTML = periodos.map(p => {
                     const saldo = p.entV - p.saiV;
                     return `<div class="rounded-2xl p-3 bg-white/[0.04] border border-white/[0.06]">
                         <div class="flex items-center justify-between"><p class="text-[13px] font-semibold">Do dia ${p.d} ao dia ${dias.length > 1 ? (p.fim === 1 ? 'fim do mês' : p.fim - 1) : p.d - 1 || 'fim do mês'}</p>
                         <span class="sensitive text-xs font-bold ${saldo < 0 ? 'text-rose-400' : 'text-emerald-400'}">${saldo < 0 ? '−' : '+'} ${fmt(Math.abs(saldo))}</span></div>
-                        <p class="text-[11px] text-slate-400 mt-1">Entra <b class="sensitive text-emerald-400">${fmt(p.entV)}</b> (${p.ent.map(r => escHTML(r.desc)).join(', ')}) · sai <b class="sensitive text-rose-300">${fmt(p.saiV)}</b> em ${p.sai.length} conta(s)</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Entra <b class="sensitive text-emerald-400">${fmt(p.entV)}</b> (${p.ent.map(r => escHTML(r.desc)).join(', ')}) · sai <b class="sensitive text-rose-300">${fmt(p.saiV)}</b> em ${p.sai.length} conta(s)${p.diaADia ? ` + ~${fmt(p.diaADia)} do dia a dia` : ''}</p>
                     </div>`; }).join('');
                 const falta = periodos.filter(p => p.entV - p.saiV < 0);
                 const maior = [...periodos].sort((a, b) => b.entV - a.entV)[0];
@@ -3560,7 +3593,29 @@
                 tip.innerHTML = falta.length && maior
                     ? `<div class="rounded-2xl p-3 bg-amber-400/10 border border-amber-400/20 text-[12px] text-amber-100"><b>💡 É aqui que você entra no vermelho.</b> Quando cair o dinheiro do dia ${maior.d}, separe <b class="sensitive">${fmt(falta.reduce((a, p) => a + (p.saiV - p.entV), 0))}</b> para as contas ${falta.map(p => `do dia ${p.d} em diante`).join(' e ')}. Sem isso, você precisa pegar emprestado antes do próximo recebimento.</div>`
                     : '';
-                tip.innerHTML += `<p class="text-[11px] mt-2 ${sobraMes < 0 ? 'text-rose-400' : 'text-slate-400'}">No mês inteiro: ${sobraMes < 0 ? 'faltam' : 'sobram'} <b class="sensitive">${fmt(Math.abs(sobraMes))}</b> depois das contas fixas e parcelas${sobraMes < 0 ? ' — o plano não fecha; corte gastos ou renegocie' : ' para mercado, transporte e o resto'}.</p>`;
+                tip.innerHTML += `<p class="text-[11px] mt-2 ${sobraMes < 0 ? 'text-rose-400' : 'text-slate-400'}">No mês inteiro: ${sobraMes < 0 ? 'faltam' : 'sobram'} <b class="sensitive">${fmt(Math.abs(sobraMes))}</b> depois das contas fixas, parcelas${usaMedia ? ' e do dia a dia' : ''}${sobraMes < 0 ? ' — o plano não fecha; corte gastos ou renegocie' : ' para mercado, transporte e o resto'}.</p>`;
+            }
+
+            // ----- Gastos do dia a dia (média) -----
+            {
+                const box = document.getElementById('debtDaily'), m = dailySpendAvg(S, thisYM);
+                const curto = c => String(c).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '');
+                box.innerHTML = !m.total
+                    ? `<div class="rounded-2xl p-3 bg-white/[0.04] border border-white/[0.06] text-[11px] text-slate-400">🛒 <b>Gastos do dia a dia:</b> importe os extratos dos últimos meses que o app calcula sozinho a média de mercado, transporte e o resto.</div>`
+                    : `<div class="rounded-2xl p-3 bg-white/[0.04] border border-white/[0.06]">
+                        <div class="flex items-center justify-between">
+                            <p class="text-[13px] font-semibold">🛒 Gastos do dia a dia</p>
+                            <span class="sensitive text-xs font-bold text-rose-300">~${fmt(m.total)}/mês</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Média de ${MONTH_NAMES[Number(m.de.slice(5)) - 1].toLowerCase()} a ${MONTH_NAMES[Number(m.ate.slice(5)) - 1].toLowerCase()} pelos seus lançamentos (sem parcelas e sem as Fixas).</p>
+                        <div class="mt-2 divide-y divide-white/[0.06]">${m.cats.slice(0, 6).map(([c, v]) => `
+                            <div class="flex items-center gap-2 py-2 text-[13px]">
+                                <span class="flex-1 min-w-0 truncate">${escHTML(c)}</span>
+                                <span class="sensitive font-semibold">~${fmt(v)}</span>
+                                ${S.budgets[c] ? `<span class="text-[10px] text-emerald-400 w-16 text-right">limite ${fmt(S.budgets[c]).replace(',00', '')}</span>` : `<button type="button" onclick='setBudgetFromAvg(${JSON.stringify(c)}, ${v.toFixed(2)})' class="w-16 shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-semibold">Limitar</button>`}
+                            </div>`).join('')}</div>
+                        <label class="flex items-center gap-2 mt-2 text-[11px] text-slate-300"><input type="checkbox" ${plan.useAvg !== false ? 'checked' : ''} onchange="setDebtPlan({useAvg: this.checked})" class="accent-emerald-500">Considerar essa média no plano</label>
+                    </div>`;
             }
 
             // ----- Estratégia -----
@@ -3580,6 +3635,8 @@
                 ? sim.order.concat(S.debts.filter(d => debtLeft(d) === 0)).map((d, k) => {
                     const t = DEBT_TYPES[d.type] || DEBT_TYPES.other, left = debtLeft(d), pc = Math.round((Number(d.paid) || 0) / (Number(d.total) || 1) * 100);
                     const fim = sim.ends[d.id] ? ymNome(ymAdd(thisYM, sim.ends[d.id])) : '';
+                    const fimNormal = simNormal.ends[d.id] ? ymNome(ymAdd(thisYM, simNormal.ends[d.id])) : '';
+                    const adianta = fim && fimNormal && sim.ends[d.id] < simNormal.ends[d.id];
                     const juros = Number(d.rate) || 0;
                     const tag = !juros ? '' : juros >= 6 ? '<span class="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 text-[10px] font-semibold">juros altos</span>' : juros >= 3 ? '<span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-semibold">juros médios</span>' : '<span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold">juros baixos</span>';
                     return `<div class="py-3 ${k ? 'border-t border-white/[0.06]' : ''}">
@@ -3598,7 +3655,7 @@
                             <div class="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full" style="width:${pc}%;background:${t[2]}"></div></div>
                             <span class="text-[10px] text-slate-400 shrink-0">${d.paid}/${d.total}</span>
                         </div>
-                        <div class="flex items-center gap-2 mt-2 pl-[52px] flex-wrap">${tag}${debtOffset(d, thisYM) > 1 ? `<span class="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-semibold">começa em ${ymNome(d.start).toLowerCase()}</span>` : ''}${fim ? `<span class="text-[10px] text-slate-400">termina em ${fim.toLowerCase()}</span>` : ''}
+                        <div class="flex items-center gap-2 mt-2 pl-[52px] flex-wrap">${tag}${debtOffset(d, thisYM) > 1 ? `<span class="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-semibold">começa em ${ymNome(d.start).toLowerCase()}</span>` : ''}${fimNormal ? `<span class="text-[10px] text-slate-400">prazo normal: ${fimNormal.toLowerCase()}</span>` : ''}${adianta ? `<span class="text-[10px] font-semibold text-emerald-400">⚡ com o plano: ${fim.toLowerCase()}</span>` : ''}
                             ${left && d.type !== 'payroll' ? `<button type="button" onclick="payDebtInstallment('${d.id}')" class="ml-auto px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">Paguei a parcela</button>` : ''}</div>
                     </div>`; }).join('')
                 : `<p class="text-xs text-slate-400 py-2">Comece cadastrando cada dívida: cartão, empréstimos, acordos e consignado.</p>`;
