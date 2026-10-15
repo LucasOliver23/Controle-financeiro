@@ -1,4 +1,4 @@
 {
-  "versao": 25,
-  "notas": "Dívidas: campo Primeira parcela em, para consignados que ainda vão começar."
+  "versao": 26,
+  "notas": "Dívidas: prazo normal e data com o plano em cada uma; média automática dos gastos do dia a dia no seu mês de verdade."
 }
