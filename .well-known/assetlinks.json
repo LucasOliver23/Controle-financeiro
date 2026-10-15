@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.lucasoliver23.controlefinanceiro",
+      "sha256_cert_fingerprints": [
+        "30:EA:AF:C1:59:3D:A8:20:B4:5C:2C:9C:39:F5:9D:F3:2C:C9:31:4D:5D:E0:70:7F:8C:CF:FA:7A:EE:78:F7:C2"
+      ]
+    }
+  }
+]
