@@ -624,7 +624,7 @@
                     </div>
                 </div>
 
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão 17</p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">18</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -658,6 +658,13 @@
                         <h3 class="set-title">Dados</h3>
                         <div class="set-group">
                         <button type="button" onclick="exportDataCSV()" class="set-row"><span class="set-icon" style="--c:#3b82f6"><i class="fa-solid fa-file-export"></i></span><span class="set-label">Exportar dados (CSV)</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="set-title">Sobre o app</h3>
+                        <div class="set-group">
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">18</span></span></div>
+                            <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
                 </div>
@@ -1071,6 +1078,21 @@
         <span id="toastMessage" class="text-sm font-medium">Sucesso!</span>
     </div>
 
+    <!-- ===================== AVISO DE NOVA VERSÃO (atualização automática) ===================== -->
+    <div id="updateBanner" class="hidden fixed left-3 right-3 md:left-auto md:right-5 md:w-96 z-[65] bg-white dark:bg-[#1c1c1e] text-slate-900 dark:text-white rounded-2xl shadow-2xl border border-emerald-500/40 p-4" style="top: calc(env(safe-area-inset-top) + 12px)" role="alert">
+        <div class="flex items-start gap-3">
+            <span class="w-9 h-9 shrink-0 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center"><i class="fa-solid fa-rotate"></i></span>
+            <div class="flex-1 min-w-0">
+                <p id="updateBannerTitle" class="text-sm font-bold">Nova versão disponível</p>
+                <p id="updateBannerNotes" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></p>
+                <div class="flex gap-2 mt-3">
+                    <button type="button" onclick="applyAppUpdate()" class="px-4 py-1.5 rounded-full bg-emerald-500 text-black text-xs font-bold hover:brightness-110 transition">Atualizar agora</button>
+                    <button type="button" onclick="dismissAppUpdate()" class="px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/[0.08] text-xs font-semibold">Depois</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!--
         SCRIPT DE LAYOUT (novo e independente)
         Cuida só da navegação e do olho. Não altera nenhuma função do script principal:
@@ -1157,6 +1179,58 @@
         if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
             window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW:', e); }); });
         }
+
+        /* ---------- Atualização automática ----------
+         * A cada publicação nova, aumente APP_VERSION aqui E "versao" no versao.json
+         * (os dois com o mesmo número). O app consulta o versao.json ao abrir, ao voltar
+         * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
+         * "Nova versão disponível" com o botão Atualizar agora.
+         */
+        var APP_VERSION = 18;
+        var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
+        var latestRemote = null;
+        document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
+        // Remove o "?v=" que o botão Atualizar coloca na URL para furar caches
+        if (/[?&]v=\d+/.test(location.search) && history.replaceState) history.replaceState(null, '', location.pathname + location.hash);
+
+        function fetchRemoteVersion() {
+            return fetch('versao.json?t=' + Date.now(), { cache: 'no-store' })
+                .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+        }
+        window.checkAppUpdate = function (manual) {
+            if (!/^https?:/.test(location.protocol)) { if (manual) window.showToast && showToast('Atualização só funciona no app publicado.'); return; }
+            if (!navigator.onLine) { if (manual) window.showToast && showToast('Sem internet para procurar atualização.'); return; }
+            fetchRemoteVersion().then(function (info) {
+                var remote = parseInt(info && info.versao, 10);
+                if (!(remote > APP_VERSION)) { if (manual) showToast('Você já está na versão mais recente (' + APP_VERSION + ').'); return; }
+                latestRemote = remote;
+                var dismissed = 0;
+                try { dismissed = parseInt(sessionStorage.getItem(UPDATE_DISMISS_KEY), 10) || 0; } catch (e) {}
+                if (!manual && dismissed >= remote) return;
+                document.getElementById('updateBannerTitle').textContent = 'Nova versão ' + remote + ' disponível';
+                document.getElementById('updateBannerNotes').textContent = info.notas || 'Toque em Atualizar agora para receber as novidades.';
+                document.getElementById('updateBanner').classList.remove('hidden');
+            }).catch(function (e) {
+                console.warn('Atualização:', e);
+                if (manual) showToast('Não foi possível procurar atualização agora.');
+            });
+        };
+        window.applyAppUpdate = function () {
+            document.getElementById('updateBanner').classList.add('hidden');
+            var reload = function () { location.replace(location.pathname + '?v=' + (latestRemote || Date.now()) + location.hash); };
+            if (!('serviceWorker' in navigator)) return reload();
+            navigator.serviceWorker.getRegistration()
+                .then(function (reg) { return reg && reg.update(); })
+                .catch(function () {})
+                .then(reload);
+        };
+        window.dismissAppUpdate = function () {
+            document.getElementById('updateBanner').classList.add('hidden');
+            try { sessionStorage.setItem(UPDATE_DISMISS_KEY, String(latestRemote || 0)); } catch (e) {}
+        };
+        window.addEventListener('load', function () { setTimeout(function () { window.checkAppUpdate(false); }, 3000); });
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') window.checkAppUpdate(false); });
+        setInterval(function () { if (document.visibilityState === 'visible') window.checkAppUpdate(false); }, 15 * 60 * 1000);
 
         /* ---------- Perfil: sub-telas (Editar perfil / Configurações) ---------- */
         window.openProfileSub = function (name) {

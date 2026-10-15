@@ -1,0 +1,23 @@
+name: Verificar versão
+
+# Confere se o número da versão é o mesmo no index.html e no versao.json.
+# Se esquecer de aumentar um dos dois, o aviso de atualização não aparece (ou fica em loop).
+on:
+  push:
+  pull_request:
+
+jobs:
+  versao:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comparar APP_VERSION com versao.json
+        run: |
+          HTML=$(grep -m1 -o 'var APP_VERSION = [0-9]\+' index.html | grep -o '[0-9]\+$')
+          JSON=$(python3 -c "import json; print(json.load(open('versao.json'))['versao'])")
+          echo "index.html: $HTML | versao.json: $JSON"
+          if [ "$HTML" != "$JSON" ]; then
+            echo "::error::Versões diferentes: index.html=$HTML e versao.json=$JSON. Use o mesmo número nos dois."
+            exit 1
+          fi
+          echo "Versão $HTML conferida."
