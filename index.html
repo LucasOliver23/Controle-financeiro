@@ -824,6 +824,8 @@
                     <h3 class="set-title">Organização</h3>
                     <div class="set-group">
                         <button type="button" data-nav="categories" class="set-row"><span class="set-icon" style="--c:#ec4899"><i class="fa-solid fa-layer-group"></i></span><span class="set-label">Categorias</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
+                        <button type="button" onclick="openProfileSub('subcats')" class="set-row"><span class="set-icon" style="--c:#a855f7"><i class="fa-solid fa-sitemap"></i></span><span class="set-label">Subcategorias</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
+                        <button type="button" onclick="openProfileSub('tags')" class="set-row"><span class="set-icon" style="--c:#14b8a6"><i class="fa-solid fa-tags"></i></span><span class="set-label">Etiquetas</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                     </div>
                 </div>
                 <div>
@@ -837,7 +839,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">30</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">31</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -852,6 +854,26 @@
                         </div>
                         <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold hover:brightness-110 transition">Salvar alterações</button>
                     </form>
+                </div>
+
+                <!-- ---------- SUB-TELA: SUBCATEGORIAS ---------- -->
+                <div id="profileSub-subcats" class="hidden space-y-4">
+                    <button type="button" onclick="closeProfileSub()" class="flex items-center gap-2 text-sm font-semibold text-emerald-500"><i class="fa-solid fa-chevron-left text-xs"></i> Perfil</button>
+                    <h2 class="text-2xl font-bold tracking-tight">Subcategorias</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Divida uma categoria em partes. Ex.: Alimentação → Mercado, Restaurante, Delivery. Os valores ao lado são os gastos do mês atual.</p>
+                    <div id="subcatsList" class="space-y-3"></div>
+                </div>
+
+                <!-- ---------- SUB-TELA: ETIQUETAS ---------- -->
+                <div id="profileSub-tags" class="hidden space-y-4">
+                    <button type="button" onclick="closeProfileSub()" class="flex items-center gap-2 text-sm font-semibold text-emerald-500"><i class="fa-solid fa-chevron-left text-xs"></i> Perfil</button>
+                    <h2 class="text-2xl font-bold tracking-tight">Etiquetas</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Marque lançamentos de categorias diferentes com a mesma etiqueta para ver o total. Ex.: #Viagem SP junta passagem, hotel e restaurantes.</p>
+                    <form onsubmit="event.preventDefault(); addTag(document.getElementById('newTagInput').value); document.getElementById('newTagInput').value='';" class="flex gap-2">
+                        <input id="newTagInput" placeholder="Nova etiqueta (ex.: Viagem SP)" maxlength="30" class="flex-1 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/[0.07] text-sm">
+                        <button type="submit" class="px-4 rounded-xl bg-emerald-500 text-black text-sm font-bold">Criar</button>
+                    </form>
+                    <div id="tagsList" class="space-y-2"></div>
                 </div>
 
                 <!-- ---------- SUB-TELA: CONFIGURAÇÕES ---------- -->
@@ -892,7 +914,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">30</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">31</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1047,7 +1069,9 @@
                 <input type="number" step="0.01" id="txAmount" required placeholder="R$ 0,00" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-lg text-slate-900 dark:text-white placeholder-slate-400">
                 <input type="date" id="txDate" required class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white">
                 <select id="txAccount" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
-                <select id="txCategory" required class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
+                <select id="txCategory" required onchange="fillSubSelect('txSub', this.value)" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
+                <select id="txSub" class="hidden w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
+                <div id="txTagsBox" class="hidden"><p class="text-[11px] text-slate-400 mb-1.5">Etiquetas</p><div id="txTags" class="flex flex-wrap gap-1.5"></div></div>
                 <input type="hidden" id="txType" value="expense">
                 <div class="pt-2">
                     <button type="submit" class="w-full py-3 bg-slate-900 dark:bg-emerald-500 text-white dark:text-black rounded-lg text-sm font-semibold hover:opacity-90 transition">Salvar Transação</button>
@@ -1254,7 +1278,9 @@
                 <button type="button" onclick="closeCatEdit()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p id="catEditDesc" class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-black rounded-xl p-3 break-words"></p>
-            <select id="catEditSelect" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            <select id="catEditSelect" onchange="fillSubSelect('catEditSub', this.value)" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            <select id="catEditSub" class="hidden w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm text-slate-900 dark:text-white"></select>
+            <div id="catEditTagsBox"><p class="text-[11px] text-slate-400 mb-1.5">Etiquetas <button type="button" onclick="closeCatEdit(); (window.navTo||switchTab)('profile'); openProfileSub('tags')" class="text-emerald-500 font-semibold ml-1">gerenciar</button></p><div id="catEditTags" class="flex flex-wrap gap-1.5"></div></div>
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" id="catEditRemember" onchange="updateCatEdit()" class="w-5 h-5 accent-emerald-500">
                 <span class="text-sm font-semibold">Lembrar para os próximos</span>
@@ -1503,7 +1529,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 30;
+        var APP_VERSION = 31;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1552,14 +1578,15 @@
         /* ---------- Perfil: sub-telas (Editar perfil / Configurações) ---------- */
         window.openProfileSub = function (name) {
             document.getElementById('profileMain').classList.add('hidden');
-            ['edit', 'settings'].forEach(function (n) {
+            ['edit', 'settings', 'subcats', 'tags'].forEach(function (n) {
                 document.getElementById('profileSub-' + n).classList.toggle('hidden', n !== name);
             });
             if (name === 'settings') window.syncSettingsSwitches();
+            if ((name === 'subcats' || name === 'tags') && window.renderOrganize) window.renderOrganize();
             var main = document.getElementById('appMain'); if (main) main.scrollTop = 0;
         };
         window.closeProfileSub = function () {
-            ['edit', 'settings'].forEach(function (n) { document.getElementById('profileSub-' + n).classList.add('hidden'); });
+            ['edit', 'settings', 'subcats', 'tags'].forEach(function (n) { document.getElementById('profileSub-' + n).classList.add('hidden'); });
             document.getElementById('profileMain').classList.remove('hidden');
         };
         window.syncSettingsSwitches = function () {
@@ -1581,7 +1608,7 @@
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve','subcats','tags'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1622,6 +1649,8 @@
             reminders: JSON.parse(localStorage.getItem('df_reminders')) || { on: true, days: 1, hour: 9 },
             transfers: JSON.parse(localStorage.getItem('df_transfers')) || [],
             reserve: JSON.parse(localStorage.getItem('df_reserve')) || { months: 6, sources: [], extra: 0, cost: 0 },
+            subcats: JSON.parse(localStorage.getItem('df_subcats')) || {},
+            tags: JSON.parse(localStorage.getItem('df_tags')) || [],
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -1838,7 +1867,7 @@
             showToast('Dados de perfil salvos!');
         }
 
-        window.openTransactionModal = (t='expense') => { document.getElementById('transactionModal').classList.remove('hidden'); document.getElementById('txDate').valueAsDate = new Date(); document.getElementById('txType').value = t; document.getElementById('modalTitle').textContent = t === 'income' ? 'Nova Receita' : 'Nova Despesa'; populateSelects(); }
+        window.openTransactionModal = (t='expense') => { document.getElementById('transactionModal').classList.remove('hidden'); document.getElementById('txDate').valueAsDate = new Date(); document.getElementById('txType').value = t; document.getElementById('modalTitle').textContent = t === 'income' ? 'Nova Receita' : 'Nova Despesa'; populateSelects(); fillSubSelect('txSub', document.getElementById('txCategory').value); fillTagChips('txTags', []); }
         window.closeTransactionModal = () => document.getElementById('transactionModal').classList.add('hidden');
         window.openAccountModal = () => document.getElementById('accountModal').classList.remove('hidden');
         window.closeAccountModal = () => document.getElementById('accountModal').classList.add('hidden');
@@ -2001,7 +2030,7 @@
             }
         }
 
-        window.handleTransactionSubmit = e => { e.preventDefault(); window.appState.transactions.unshift({ id: 'tx_'+Date.now(), desc: document.getElementById('txDesc').value, amount: parseFloat(document.getElementById('txAmount').value), date: document.getElementById('txDate').value, account: document.getElementById('txAccount').value, category: document.getElementById('txCategory').value, type: document.getElementById('txType').value }); closeTransactionModal(); saveAndRefresh(); showToast('Transação salva!'); }
+        window.handleTransactionSubmit = e => { e.preventDefault(); window.appState.transactions.unshift({ id: 'tx_'+Date.now(), desc: document.getElementById('txDesc').value, amount: parseFloat(document.getElementById('txAmount').value), date: document.getElementById('txDate').value, account: document.getElementById('txAccount').value, category: document.getElementById('txCategory').value, type: document.getElementById('txType').value, ...pickSubTags('txSub', 'txTags') }); closeTransactionModal(); saveAndRefresh(); showToast('Transação salva!'); }
         window.handleAccountSubmit = e => { e.preventDefault(); window.appState.accounts.push({ id: 'acc_'+Date.now(), name: document.getElementById('accName').value, type: document.getElementById('accType').value, balance: parseFloat(document.getElementById('accBalance').value) }); closeAccountModal(); saveAndRefresh(); showToast('Conta criada!'); }
         window.handleCardSubmit = e => { e.preventDefault(); window.appState.cards.push({ id: 'card_'+Date.now(), name: document.getElementById('cardName').value, limit: parseFloat(document.getElementById('cardLimit').value), dueDay: parseInt(document.getElementById('cardDue').value) }); closeCardModal(); saveAndRefresh(); showToast('Cartão salvo!'); }
         window.handleInstallmentSubmit = e => { e.preventDefault(); const t=parseFloat(document.getElementById('instTotal').value), c=parseInt(document.getElementById('instCount').value), v=t/c; const d=new Date(document.getElementById('instDate').value+'T12:00:00'); for(let i=1;i<=c;i++){const nd=new Date(d);nd.setMonth(nd.getMonth()+(i-1));window.appState.transactions.push({id:'inst_'+Date.now()+'_'+i, desc:`${document.getElementById('instDesc').value} (${i}/${c})`, amount:v, date:nd.toISOString().split('T')[0], account:'', category:'🛍️ Outros', type:'expense'});} closeInstallmentModal(); saveAndRefresh(); showToast('Parcelas geradas!'); }
@@ -2031,7 +2060,7 @@
         
         window.openCategoryModal = function(name = null) { document.getElementById('categoryModal').classList.remove('hidden'); document.getElementById('catOldName').value = name || ''; document.getElementById('catName').value = name || ''; document.getElementById('catImageUrl').value = (name && window.appState.categoryImages) ? (window.appState.categoryImages[name] || '') : ''; }
         window.closeCategoryModal = () => document.getElementById('categoryModal').classList.add('hidden');
-        window.handleCategorySubmit = function(e) { e.preventDefault(); const o = document.getElementById('catOldName').value.trim(), n = document.getElementById('catName').value.trim(), img = document.getElementById('catImageUrl').value.trim(); if (!n) return; if (!window.appState.categoryImages) window.appState.categoryImages = {}; if (o) { const i = window.appState.categories.indexOf(o); if (i !== -1) window.appState.categories[i] = n; if (o !== n) { window.appState.transactions.forEach(t => { if (t.category === o) t.category = n; }); if (window.appState.budgets[o] !== undefined) { window.appState.budgets[n] = window.appState.budgets[o]; delete window.appState.budgets[o]; } } if (img) window.appState.categoryImages[n] = img; else delete window.appState.categoryImages[n]; if (o !== n) delete window.appState.categoryImages[o]; } else { if (!window.appState.categories.includes(n)) window.appState.categories.push(n); if (img) window.appState.categoryImages[n] = img; } closeCategoryModal(); saveAndRefresh(); showToast('Categoria salva!'); }
+        window.handleCategorySubmit = function(e) { e.preventDefault(); const o = document.getElementById('catOldName').value.trim(), n = document.getElementById('catName').value.trim(), img = document.getElementById('catImageUrl').value.trim(); if (!n) return; if (!window.appState.categoryImages) window.appState.categoryImages = {}; if (o) { const i = window.appState.categories.indexOf(o); if (i !== -1) window.appState.categories[i] = n; if (o !== n) { window.appState.transactions.forEach(t => { if (t.category === o) t.category = n; }); if (window.appState.subcats && window.appState.subcats[o]) { window.appState.subcats[n] = window.appState.subcats[o]; delete window.appState.subcats[o]; } if (window.appState.budgets[o] !== undefined) { window.appState.budgets[n] = window.appState.budgets[o]; delete window.appState.budgets[o]; } } if (img) window.appState.categoryImages[n] = img; else delete window.appState.categoryImages[n]; if (o !== n) delete window.appState.categoryImages[o]; } else { if (!window.appState.categories.includes(n)) window.appState.categories.push(n); if (img) window.appState.categoryImages[n] = img; } closeCategoryModal(); saveAndRefresh(); showToast('Categoria salva!'); }
 
         window.deleteTransaction = id => { window.appState.transactions = window.appState.transactions.filter(t=>t.id!==id); saveAndRefresh(); }
         window.deleteAccount = id => { window.appState.accounts = window.appState.accounts.filter(a=>a.id!==id); saveAndRefresh(); }
@@ -2919,7 +2948,8 @@
                   source = document.getElementById('filterSource').value;
             const filtered = [...window.appState.transactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).filter(t => {
                 const [tY, tM] = t.date.split('-'), b = importBatchOf(t);
-                return (t.desc.toLowerCase().includes(search) || t.category.toLowerCase().includes(search))
+                const extra = `${t.sub || ''} ${(t.tags || []).map(x => '#' + x).join(' ')}`.toLowerCase();
+                return (t.desc.toLowerCase().includes(search) || t.category.toLowerCase().includes(search) || extra.includes(search))
                     && (acc === 'all' || t.account === acc) && (month === 'all' || tM === month) && (year === 'all' || tY === year)
                     && (source === 'all' || (source === 'manual' ? !b : b === source));
             });
@@ -2979,8 +3009,8 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-medium leading-snug line-clamp-2">${escHTML(t.desc)}</p>
                             <p class="text-[11px] text-slate-400 mt-0.5 truncate">
-                                <button type="button" onclick="event.stopPropagation(); openCatEdit('${t.id}')" class="hover:text-emerald-400">${escHTML(semEmoji(t.category))} <i class="fa-solid fa-pen text-[8px] opacity-60"></i></button>${t.account ? ` · ${escHTML(t.account)}` : ''}
-                            </p>
+                                <button type="button" onclick="event.stopPropagation(); openCatEdit('${t.id}')" class="hover:text-emerald-400">${escHTML(semEmoji(t.category))}${t.sub ? ` › ${escHTML(t.sub)}` : ''} <i class="fa-solid fa-pen text-[8px] opacity-60"></i></button>${t.account ? ` · ${escHTML(t.account)}` : ''}
+                            </p>${(t.tags || []).length ? `<p class="mt-1 flex flex-wrap gap-1">${t.tags.map(x => `<span class="px-1.5 py-0.5 rounded-md bg-teal-500/15 text-teal-300 text-[10px] font-semibold">#${escHTML(x)}</span>`).join('')}</p>` : ''}
                         </div>
                         <div class="text-right shrink-0">
                             <p class="sensitive text-sm font-semibold whitespace-nowrap ${isInc ? 'text-emerald-400' : 'text-white'}">${isInc ? '+' : '−'} ${formatCurrency(t.amount)}</p>
@@ -3427,6 +3457,8 @@
             if (!Array.isArray(S.transfers)) S.transfers = [];
             if (!S.reserve || typeof S.reserve !== 'object') S.reserve = { months: 6, sources: [], extra: 0, cost: 0 };
             if (!Array.isArray(S.reserve.sources)) S.reserve.sources = [];
+            if (!S.subcats || typeof S.subcats !== 'object' || Array.isArray(S.subcats)) S.subcats = {};
+            if (!Array.isArray(S.tags)) S.tags = [];
         }
         function normDesc(d) { return String(d || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
         const DESC_PREFIX = /^(entrada\s+pix|sa[ií]da\s+pix|pix\s+(enviado\s+para|recebido\s+de)|transfer[eê]ncia\s+(enviada\s+para|recebida\s+de)|d[eé]bito\s+de\s+cart[aã]o|compra\s+(no\s+)?(d[eé]bito|cr[eé]dito)|pagamento\s+de\s+boleto|pagamento\s+de\s+fatura|pagamento|outros\s+gastos|ted|doc)\s*[-:]?\s*/i;
@@ -3461,6 +3493,7 @@
             const sel = document.getElementById('catEditSelect');
             sel.innerHTML = S_().categories.map(c => `<option value="${escHTML(c)}">${escHTML(c)}</option>`).join('');
             sel.value = t.category;
+            fillSubSelect('catEditSub', t.category, t.sub); fillTagChips('catEditTags', t.tags || []);
             document.getElementById('catEditKeyword').value = suggestRuleKeyword(t.desc);
             document.getElementById('catEditRemember').checked = true;
             document.getElementById('catEditApplyAll').checked = true;
@@ -3483,6 +3516,7 @@
             const cat = document.getElementById('catEditSelect').value, remember = document.getElementById('catEditRemember').checked;
             const kw = document.getElementById('catEditKeyword').value.trim().toLowerCase();
             t.category = cat;
+            Object.assign(t, pickSubTags('catEditSub', 'catEditTags')); if (!t.sub) delete t.sub; if (!t.tags.length) delete t.tags;
             let changed = 1;
             if (remember && kw.length >= 2) {
                 const ex = S.rules.find(r => normDesc(r.match) === normDesc(kw) && r.type === t.type);
@@ -4374,6 +4408,105 @@
             R.extra = parseFloat(document.getElementById('rsvExtra').value) || 0;
             R.cost = parseFloat(document.getElementById('rsvCost').value) || 0;
             closeReserveModal(); saveAndRefresh(); showToast('Reserva atualizada');
+        };
+
+
+        // =====================================================================
+        // SUBCATEGORIAS E ETIQUETAS
+        // appState.subcats = { "🍔 Alimentação": ["Mercado", "Delivery"] } · lançamento.sub = "Mercado"
+        // appState.tags = ["Viagem SP"] · lançamento.tags = ["Viagem SP"]
+        // =====================================================================
+        const limpaNome = v => String(v || '').replace(/^#+/, '').replace(/\s+/g, ' ').trim().slice(0, 30);
+        window.fillSubSelect = function (id, cat, atual) {
+            ensureSmartState();
+            const el = document.getElementById(id); if (!el) return;
+            const lista = S_().subcats[cat] || [];
+            el.innerHTML = `<option value="">Sem subcategoria</option>` + lista.map(x => `<option value="${escHTML(x)}">${escHTML(x)}</option>`).join('');
+            el.value = atual && lista.includes(atual) ? atual : '';
+            el.classList.toggle('hidden', !lista.length);
+        };
+        window.fillTagChips = function (id, marcadas) {
+            ensureSmartState();
+            const el = document.getElementById(id); if (!el) return;
+            const tags = S_().tags;
+            const box = document.getElementById(id === 'txTags' ? 'txTagsBox' : 'catEditTagsBox');
+            if (box && id === 'txTags') box.classList.toggle('hidden', !tags.length);
+            el.innerHTML = tags.length ? tags.map(x => `<button type="button" data-tag="${escHTML(x)}" aria-pressed="${marcadas.includes(x)}" onclick="this.setAttribute('aria-pressed', this.getAttribute('aria-pressed') !== 'true'); this.classList.toggle('on')" class="chip ${marcadas.includes(x) ? 'on' : ''}">#${escHTML(x)}</button>`).join('')
+                : `<span class="text-[11px] text-slate-500">Nenhuma etiqueta criada ainda.</span>`;
+        };
+        function pickSubTags(subId, tagsId) {
+            const sub = (document.getElementById(subId) || {}).value || '';
+            const tags = [...document.querySelectorAll(`#${tagsId} [data-tag]`)].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.tag);
+            return { sub, tags };
+        }
+        window.addSubcat = function (cat, nome) {
+            ensureSmartState(); nome = limpaNome(nome); if (!nome) return;
+            const L = S_().subcats[cat] = S_().subcats[cat] || [];
+            if (L.some(x => x.toLowerCase() === nome.toLowerCase())) { showToast('Essa subcategoria já existe'); return; }
+            L.push(nome); saveAndRefresh(); renderOrganize();
+        };
+        window.removeSubcat = function (cat, nome) {
+            const usados = S_().transactions.filter(t => t.category === cat && t.sub === nome);
+            if (!confirm(`Remover a subcategoria "${nome}"?${usados.length ? `\n${usados.length} lançamento(s) ficam só com a categoria.` : ''}`)) return;
+            usados.forEach(t => delete t.sub);
+            S_().subcats[cat] = (S_().subcats[cat] || []).filter(x => x !== nome);
+            if (!S_().subcats[cat].length) delete S_().subcats[cat];
+            saveAndRefresh(); renderOrganize();
+        };
+        window.addTag = function (nome) {
+            ensureSmartState(); nome = limpaNome(nome); if (!nome) return;
+            if (S_().tags.some(x => x.toLowerCase() === nome.toLowerCase())) { showToast('Essa etiqueta já existe'); return; }
+            S_().tags.push(nome); saveAndRefresh(); renderOrganize(); showToast(`Etiqueta #${nome} criada`);
+        };
+        window.renameTag = function (velho) {
+            const novo = limpaNome(prompt('Novo nome da etiqueta:', velho)); if (!novo || novo === velho) return;
+            if (S_().tags.some(x => x.toLowerCase() === novo.toLowerCase() && x !== velho)) { showToast('Essa etiqueta já existe'); return; }
+            S_().tags = S_().tags.map(x => x === velho ? novo : x);
+            S_().transactions.forEach(t => { if ((t.tags || []).includes(velho)) t.tags = t.tags.map(x => x === velho ? novo : x); });
+            saveAndRefresh(); renderOrganize();
+        };
+        window.removeTag = function (nome) {
+            const usados = S_().transactions.filter(t => (t.tags || []).includes(nome));
+            if (!confirm(`Excluir a etiqueta #${nome}?${usados.length ? `\nEla sai de ${usados.length} lançamento(s) (os lançamentos continuam).` : ''}`)) return;
+            usados.forEach(t => { t.tags = t.tags.filter(x => x !== nome); if (!t.tags.length) delete t.tags; });
+            S_().tags = S_().tags.filter(x => x !== nome); saveAndRefresh(); renderOrganize();
+        };
+        window.showTagInExtrato = function (nome) {
+            (window.navTo || switchTab)('transactions');
+            const m = document.getElementById('filterMonth'), y = document.getElementById('filterYear');
+            if (m) m.value = 'all'; if (y) y.value = 'all';
+            document.getElementById('searchInput').value = '#' + nome.toLowerCase(); filterTransactions();
+        };
+        window.renderOrganize = function () {
+            ensureSmartState();
+            const S = S_(), ym = isoDate(new Date()).slice(0, 7), fmt = formatCurrency;
+            const semEmoji = c => String(c || '').replace(/^\p{Extended_Pictographic}️?\s*/u, '');
+            const box = document.getElementById('subcatsList');
+            if (box) box.innerHTML = S.categories.map((c, k) => {
+                const subs = S.subcats[c] || [];
+                const doMes = S.transactions.filter(t => t.type === 'expense' && t.category === c && String(t.date).slice(0, 7) === ym);
+                const tot = sub => doMes.filter(t => (t.sub || '') === sub).reduce((a, t) => a + t.amount, 0);
+                const semSub = tot('');
+                return `<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-white/[0.07] p-4">
+                    <div class="flex items-center justify-between"><p class="text-sm font-semibold">${escHTML(c)}</p>${doMes.length ? `<span class="sensitive text-xs text-slate-400">${fmt(doMes.reduce((a, t) => a + t.amount, 0))}</span>` : ''}</div>
+                    ${subs.length ? `<div class="mt-2 divide-y divide-slate-100 dark:divide-white/[0.06]">${subs.map(x => `<div class="flex items-center gap-2 py-1.5 text-[13px]"><i class="fa-solid fa-turn-up rotate-90 text-[10px] text-slate-500 w-4"></i><span class="flex-1 truncate">${escHTML(x)}</span><span class="sensitive text-xs text-slate-400">${tot(x) ? fmt(tot(x)) : ''}</span><button type="button" onclick='removeSubcat(${JSON.stringify(c)}, ${JSON.stringify(x)})' class="w-7 h-7 rounded-full text-slate-500 hover:text-rose-500" aria-label="Remover"><i class="fa-solid fa-xmark text-xs"></i></button></div>`).join('')}${semSub && subs.length ? `<div class="flex items-center gap-2 py-1.5 text-[12px] text-slate-500"><span class="w-4"></span><span class="flex-1">Sem subcategoria</span><span class="sensitive">${fmt(semSub)}</span><span class="w-7"></span></div>` : ''}</div>` : ''}
+                    <form onsubmit='event.preventDefault(); addSubcat(${JSON.stringify(c)}, this.elements[0].value)' class="flex gap-2 mt-2">
+                        <input placeholder="+ Subcategoria em ${escHTML(semEmoji(c))}" maxlength="30" class="flex-1 min-w-0 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-[13px]">
+                        <button type="submit" class="px-3 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold">Adicionar</button>
+                    </form>
+                </div>`; }).join('');
+            const tl = document.getElementById('tagsList');
+            if (tl) tl.innerHTML = S.tags.length ? S.tags.map(x => {
+                const ts = S.transactions.filter(t => (t.tags || []).includes(x));
+                const gasto = ts.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+                return `<div class="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/70 dark:border-white/[0.07] p-3">
+                    <span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center bg-teal-500/15 text-teal-300"><i class="fa-solid fa-tag"></i></span>
+                    <button type="button" onclick='showTagInExtrato(${JSON.stringify(x)})' class="flex-1 min-w-0 text-left"><p class="text-sm font-semibold truncate">#${escHTML(x)}</p><p class="text-[11px] text-slate-400">${ts.length} lançamento(s) · ver no extrato</p></button>
+                    <span class="sensitive text-sm font-semibold shrink-0">${fmt(gasto)}</span>
+                    <button type="button" onclick='renameTag(${JSON.stringify(x)})' class="w-8 h-8 rounded-full text-slate-500 hover:text-emerald-400" aria-label="Renomear"><i class="fa-solid fa-pen text-xs"></i></button>
+                    <button type="button" onclick='removeTag(${JSON.stringify(x)})' class="w-8 h-8 rounded-full text-slate-500 hover:text-rose-500" aria-label="Excluir"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>`; }).join('')
+                : `<p class="text-xs text-slate-400 text-center py-6">Nenhuma etiqueta ainda. Crie uma acima e marque os lançamentos tocando na categoria deles no extrato.</p>`;
         };
 
         function renderSmartFeatures() {
