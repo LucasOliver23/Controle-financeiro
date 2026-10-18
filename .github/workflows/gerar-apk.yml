@@ -18,6 +18,11 @@ on:
     paths:
       - 'app-android/**'
       - '.github/workflows/gerar-apk.yml'
+  # Nos Pull Requests só compila (para conferir que não tem erro antes de aprovar); não publica
+  pull_request:
+    paths:
+      - 'app-android/**'
+      - '.github/workflows/gerar-apk.yml'
   workflow_dispatch:
 
 permissions:
@@ -66,6 +71,7 @@ jobs:
           path: ${{ runner.temp }}/ControleFinanceiro.apk
 
       - name: Publicar em Releases
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

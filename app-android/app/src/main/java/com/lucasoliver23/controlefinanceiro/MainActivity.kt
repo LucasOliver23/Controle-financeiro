@@ -1,9 +1,11 @@
 package com.lucasoliver23.controlefinanceiro
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -53,6 +55,7 @@ import java.io.File
  * O que o WebView não faz sozinho, o app faz pela ponte "AndroidApp" (usada pelo index.html):
  *  - login com Google (o Google bloqueia login dentro de WebView): Credential Manager nativo
  *  - salvar e compartilhar arquivos (CSV, resumo do mês)
+ *  - lembretes de vencimento como notificação no celular (Lembretes.kt)
  */
 class MainActivity : ComponentActivity() {
 
@@ -69,6 +72,10 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var web: WebView
     private var arquivoCallback: ValueCallback<Array<Uri>>? = null
+
+    // Android 13+: pede permissão para mostrar as notificações dos lembretes
+    private val pedirNotificacao =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     private val escolherArquivo =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -232,6 +239,24 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun saveFile(nome: String, mime: String, base64: String) = runOnUiThread { salvarArquivo(nome, mime, base64) }
+
+        @JavascriptInterface
+        fun scheduleReminders(json: String) = runOnUiThread {
+            Lembretes.criarCanal(this@MainActivity)
+            Lembretes.salvarEAgendar(this@MainActivity, json)
+            val temAviso = json.trim().length > 2
+            if (temAviso && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Lembretes.podeNotificar(this@MainActivity)) {
+                val prefs = getSharedPreferences("lembretes", Context.MODE_PRIVATE)
+                // Pergunta uma vez; se a pessoa negar, o Android não deixa perguntar de novo
+                if (!prefs.getBoolean("pediu_permissao", false)) {
+                    prefs.edit().putBoolean("pediu_permissao", true).apply()
+                    pedirNotificacao.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun notificationsAllowed(): Boolean = Lembretes.podeNotificar(this@MainActivity)
 
         @JavascriptInterface
         fun shareFile(nome: String, mime: String, base64: String) = runOnUiThread { compartilharArquivo(nome, mime, base64) }
