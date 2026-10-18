@@ -193,6 +193,11 @@
         .debt-step .dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
         .chip { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,255,255,.06); color: #a1a1aa; border: 1px solid rgba(255,255,255,.06); }
         .chip.on { background: #00d084; color: #000; border-color: #00d084; }
+        /* ===== Reserva de emergência ===== */
+        .rsv-hero { border-radius: 28px; padding: 20px; position: relative; overflow: hidden; border: 1px solid rgba(56,189,248,.25);
+            background: radial-gradient(110% 90% at 100% 0%, rgba(56,189,248,.28) 0%, rgba(56,189,248,0) 55%), radial-gradient(90% 80% at 0% 100%, rgba(0,208,132,.16) 0%, rgba(0,208,132,0) 60%), linear-gradient(160deg, #07161f 0%, #0b0b0d 65%); }
+        .rsv-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+        .rsv-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #38bdf8, #00d084); }
     </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -326,6 +331,17 @@
                     <span class="flex-1 min-w-0">
                         <span class="block text-sm font-bold text-white">Sair das dívidas</span>
                         <span id="dashDebtSub" class="block text-[11px] text-white/60">Monte seu plano e veja o dia da liberdade</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-white/50"></i>
+                </button>
+
+                <!-- ============ RESERVA DE EMERGÊNCIA (atalho) ============ -->
+                <button type="button" onclick="(window.navTo||switchTab)('goals')" id="dashReserve" class="rsv-hero w-full text-left flex items-center gap-3 !p-4">
+                    <span class="w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center bg-sky-400/20 text-sky-300"><i class="fa-solid fa-life-ring"></i></span>
+                    <span class="flex-1 min-w-0">
+                        <span class="flex items-center justify-between gap-2"><span class="text-sm font-bold text-white">Reserva de emergência</span><span id="dashReservePct" class="text-xs font-bold text-sky-300"></span></span>
+                        <span class="rsv-bar block mt-1.5 !h-1.5"><span id="dashReserveBar" style="width:0%"></span></span>
+                        <span id="dashReserveSub" class="block text-[11px] text-white/60 mt-1">Quanto guardar para imprevistos</span>
                     </span>
                     <i class="fa-solid fa-chevron-right text-[10px] text-white/50"></i>
                 </button>
@@ -672,6 +688,7 @@
                     <p class="text-sm text-slate-500 dark:text-slate-400">Defina um objetivo e o prazo em meses. O aporte necessário atualiza dinamicamente conforme você poupa!</p>
                 </div>
                 
+                <section id="reserveCard" class="rsv-hero"></section>
                 <div id="goalsList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 <div id="goalsEmptyState" class="hidden py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07]"><h4 class="font-medium text-slate-400">Nenhuma meta cadastrada</h4></div>
             </div>
@@ -820,7 +837,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">29</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">30</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -875,7 +892,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">29</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">30</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -961,6 +978,23 @@
     <!-- === MODAIS === -->
 
     <!-- === MODAIS === -->
+
+    <div id="reserveModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+        <form onsubmit="saveReserve(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-4 border border-slate-200 dark:border-white/[0.08]">
+            <div class="flex justify-between items-center"><h3 class="font-bold text-lg">Configurar reserva</h3><button type="button" onclick="closeReserveModal()" class="text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
+            <div>
+                <p class="text-[11px] text-slate-400 mb-2">Quantos meses do seu custo de vida guardar?</p>
+                <div id="rsvMonthsChips" class="flex gap-2"></div>
+            </div>
+            <div>
+                <p class="text-[11px] text-slate-400 mb-2">Onde está guardada a reserva? <span class="text-slate-500">(marque as contas e investimentos)</span></p>
+                <div id="rsvSources" class="space-y-1.5"></div>
+            </div>
+            <label class="block text-[11px] text-slate-400">Guardado fora do app <span class="text-slate-500">(opcional: poupança, dinheiro em casa…)</span><input id="rsvExtra" type="number" step="0.01" min="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+            <label class="block text-[11px] text-slate-400">Custo de vida por mês <span class="text-slate-500">(deixe em branco para usar a média dos seus gastos)</span><input id="rsvCost" type="number" step="0.01" min="0" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+            <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Salvar</button>
+        </form>
+    </div>
 
     <div id="transferModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
         <form onsubmit="saveTransfer(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-3 border border-slate-200 dark:border-white/[0.08]">
@@ -1469,7 +1503,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 29;
+        var APP_VERSION = 30;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1547,7 +1581,7 @@
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1587,6 +1621,7 @@
             debtPlan: JSON.parse(localStorage.getItem('df_debtPlan')) || { strategy: 'avalanche', extra: 0, reserveGoal: 500 },
             reminders: JSON.parse(localStorage.getItem('df_reminders')) || { on: true, days: 1, hour: 9 },
             transfers: JSON.parse(localStorage.getItem('df_transfers')) || [],
+            reserve: JSON.parse(localStorage.getItem('df_reserve')) || { months: 6, sources: [], extra: 0, cost: 0 },
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -3390,6 +3425,8 @@
             if (!Array.isArray(S.ignoredSubs)) S.ignoredSubs = [];
             if (!S.reminders || typeof S.reminders !== 'object') S.reminders = { on: true, days: 1, hour: 9 };
             if (!Array.isArray(S.transfers)) S.transfers = [];
+            if (!S.reserve || typeof S.reserve !== 'object') S.reserve = { months: 6, sources: [], extra: 0, cost: 0 };
+            if (!Array.isArray(S.reserve.sources)) S.reserve.sources = [];
         }
         function normDesc(d) { return String(d || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
         const DESC_PREFIX = /^(entrada\s+pix|sa[ií]da\s+pix|pix\s+(enviado\s+para|recebido\s+de)|transfer[eê]ncia\s+(enviada\s+para|recebida\s+de)|d[eé]bito\s+de\s+cart[aã]o|compra\s+(no\s+)?(d[eé]bito|cr[eé]dito)|pagamento\s+de\s+boleto|pagamento\s+de\s+fatura|pagamento|outros\s+gastos|ted|doc)\s*[-:]?\s*/i;
@@ -3767,7 +3804,7 @@
             // ----- Jornada -----
             const caras = ativos.filter(d => (Number(d.rate) || 0) >= 5 || d.type === 'card');
             const reserva = S.goals.find(g => /reserva|emerg/i.test(g.name || ''));
-            const temReserva = reserva && (Number(reserva.totalSaved) || Number(reserva.saved) || 0) >= (plan.reserveGoal || 500);
+            const temReserva = (reserva && (Number(reserva.totalSaved) || Number(reserva.saved) || 0) >= (plan.reserveGoal || 500)) || reserveInfo().guardado >= (plan.reserveGoal || 500);
             const fecha = (() => { const e = entradas.reduce((a, r) => a + Number(r.amount), 0); const o = S.recurring.filter(r => r.type === 'expense').reduce((a, r) => a + Number(r.amount), 0) + agora.filter(d => d.type !== 'payroll').reduce((a, d) => a + Number(d.parcel), 0); return e > 0 && e - o >= 0; })();
             const etapas = [
                 ['Colocar tudo no papel', 'Cadastrar dívidas, recebimentos e contas fixas.', S.debts.length > 0 && entradas.length > 0],
@@ -4247,6 +4284,98 @@
             S_().transfers = (S_().transfers || []).filter(t => t.id !== id); saveAndRefresh();
         };
 
+
+        // =====================================================================
+        // RESERVA DE EMERGÊNCIA: meta = custo de vida médio × meses escolhidos.
+        // O guardado é o saldo das contas/investimentos marcados + o que está fora do app.
+        // =====================================================================
+        function reserveInfo() {
+            ensureSmartState();
+            const S = S_(), R = S.reserve, thisYM = isoDate(new Date()).slice(0, 7);
+            // Custo de vida: média das despesas dos últimos 3 meses fechados com dados (sem contar transferências)
+            const meses = [1, 2, 3].map(k => ymAdd(thisYM, -k));
+            const porMes = meses.map(ym => S.transactions.filter(t => t.type === 'expense' && String(t.date).slice(0, 7) === ym).reduce((a, t) => a + (Number(t.amount) || 0), 0)).filter(v => v > 0);
+            const fixas = S.recurring.filter(r => r.type === 'expense').reduce((a, r) => a + (Number(r.amount) || 0), 0);
+            const media = porMes.length ? porMes.reduce((a, b) => a + b, 0) / porMes.length : fixas;
+            const custo = Number(R.cost) > 0 ? Number(R.cost) : media;
+            const fonteCusto = Number(R.cost) > 0 ? 'valor que você informou' : porMes.length ? `média de ${porMes.length} ${porMes.length > 1 ? 'meses' : 'mês'}` : fixas ? 'soma das contas fixas' : '';
+            const meta = Math.ceil(custo * (Number(R.months) || 6) / 100) * 100;
+            const fontes = [];
+            S.accounts.forEach(a => { if (R.sources.includes('acc:' + a.name)) fontes.push({ nome: a.name, v: Number(a.calculatedBalance ?? a.balance) || 0 }); });
+            S.investments.forEach(i => { if (R.sources.includes('inv:' + i.id)) fontes.push({ nome: i.name, v: Number(i.current) || Number(i.invested) || 0 }); });
+            if (Number(R.extra) > 0) fontes.push({ nome: 'Fora do app', v: Number(R.extra) });
+            const guardado = Math.max(0, fontes.reduce((a, f) => a + f.v, 0));
+            // Sobra média por mês (receitas − despesas dos mesmos meses) para sugerir o ritmo
+            const sobras = meses.map(ym => S.transactions.filter(t => String(t.date).slice(0, 7) === ym).reduce((a, t) => a + (t.type === 'income' ? 1 : -1) * (Number(t.amount) || 0), 0));
+            const sobra = sobras.length ? sobras.reduce((a, b) => a + b, 0) / sobras.length : 0;
+            return { R, custo, fonteCusto, meta, guardado, fontes, falta: Math.max(0, meta - guardado), pct: meta > 0 ? Math.min(100, guardado / meta * 100) : 0, cobre: custo > 0 ? guardado / custo : 0, sobra, configurada: R.sources.length > 0 || Number(R.extra) > 0 };
+        }
+        const mesesTxt = n => n >= 1 ? `${n.toFixed(1).replace('.', ',').replace(',0', '')} ${n >= 2 ? 'meses' : 'mês'}` : `${Math.round(n * 30)} dias`;
+
+        function renderReserve() {
+            const I = reserveInfo(), fmt = formatCurrency;
+            // Atalho no Início
+            const pct = document.getElementById('dashReservePct'), bar = document.getElementById('dashReserveBar'), sub = document.getElementById('dashReserveSub');
+            if (pct) {
+                pct.textContent = I.configurada ? `${Math.floor(I.pct)}%` : '';
+                bar.style.width = `${I.pct}%`;
+                sub.innerHTML = !I.custo ? 'Lance seus gastos para calcular quanto guardar'
+                    : !I.configurada ? `Meta sugerida: <span class="sensitive">${fmt(I.meta)}</span> (${I.R.months} meses) · toque para começar`
+                    : I.falta <= 0 ? `Completa! Cobre ${mesesTxt(I.cobre)} do seu custo de vida 🎉`
+                    : `<span class="sensitive">${fmt(I.guardado)}</span> de <span class="sensitive">${fmt(I.meta)}</span> · cobre ${mesesTxt(I.cobre)}`;
+            }
+            // Card na tela Metas
+            const box = document.getElementById('reserveCard'); if (!box) return;
+            const ritmo12 = I.falta / 12;
+            const ritmoSobra = I.sobra > 0 ? I.sobra * 0.3 : 0;
+            const emQuantos = ritmoSobra > 0 ? Math.ceil(I.falta / ritmoSobra) : 0;
+            box.innerHTML = `
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center bg-sky-400/20 text-sky-300"><i class="fa-solid fa-life-ring"></i></span>
+                        <div class="min-w-0"><p class="text-base font-bold text-white">Reserva de emergência</p><p class="text-[11px] text-white/60">Para imprevistos: saúde, carro, perder o emprego</p></div>
+                    </div>
+                    <button type="button" onclick="openReserveModal()" class="shrink-0 w-9 h-9 rounded-full bg-white/10 text-white/80 flex items-center justify-center" aria-label="Configurar reserva"><i class="fa-solid fa-gear text-sm"></i></button>
+                </div>
+                ${!I.custo ? `<p class="text-sm text-white/70 mt-4">Lance seus gastos (ou importe o extrato) para o app calcular o seu custo de vida e a meta da reserva.</p>` : `
+                <div class="mt-5 flex items-end justify-between gap-3">
+                    <div><p class="text-[11px] text-white/60">Guardado</p><p class="sensitive text-2xl font-bold text-white">${fmt(I.guardado)}</p></div>
+                    <div class="text-right"><p class="text-[11px] text-white/60">Meta (${I.R.months} meses)</p><p class="sensitive text-base font-semibold text-sky-300">${fmt(I.meta)}</p></div>
+                </div>
+                <div class="rsv-bar mt-3"><span style="width:${I.pct}%"></span></div>
+                <div class="flex justify-between text-[11px] text-white/60 mt-1.5"><span>${Math.floor(I.pct)}% completo</span><span>cobre ${mesesTxt(I.cobre)}</span></div>
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <div class="rounded-2xl bg-white/[0.06] p-3"><p class="text-[11px] text-white/60">Custo de vida</p><p class="sensitive text-sm font-bold text-white">${fmt(I.custo)}/mês</p><p class="text-[10px] text-white/40">${escHTML(I.fonteCusto)}</p></div>
+                    <div class="rounded-2xl bg-white/[0.06] p-3"><p class="text-[11px] text-white/60">Falta guardar</p><p class="sensitive text-sm font-bold ${I.falta > 0 ? 'text-amber-300' : 'text-emerald-400'}">${I.falta > 0 ? fmt(I.falta) : 'Nada! 🎉'}</p><p class="text-[10px] text-white/40">${I.falta > 0 ? `<span class="sensitive">${fmt(ritmo12)}</span>/mês em 12 meses` : 'reserva completa'}</p></div>
+                </div>
+                ${I.falta > 0 && emQuantos ? `<p class="text-[12px] text-white/70 mt-3"><i class="fa-solid fa-lightbulb text-amber-300 mr-1"></i>Guardando 30% da sua sobra média (<span class="sensitive">${fmt(ritmoSobra)}</span>/mês), você completa em <b>${emQuantos} ${emQuantos > 1 ? 'meses' : 'mês'}</b>.</p>` : ''}
+                ${I.configurada ? `<div class="mt-3 flex flex-wrap gap-1.5">${I.fontes.map(f => `<span class="px-2.5 py-1 rounded-full bg-white/[0.08] text-[11px] text-white/80">${escHTML(f.nome)} · <span class="sensitive">${fmt(f.v)}</span></span>`).join('')}</div>`
+                    : `<button type="button" onclick="openReserveModal()" class="mt-4 w-full py-2.5 rounded-full bg-sky-400 text-black text-sm font-bold">Escolher onde guardo a reserva</button>`}`}`;
+        }
+        window.openReserveModal = function () {
+            const I = reserveInfo(), S = S_();
+            document.getElementById('rsvMonthsChips').innerHTML = [3, 6, 12].map(m => `<button type="button" data-m="${m}" onclick="this.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === this))" class="chip ${Number(I.R.months) === m ? 'on' : ''}">${m} meses</button>`).join('');
+            const linha = (key, nome, v, icone) => `<label class="flex items-center gap-3 p-3 rounded-xl bg-slate-800 cursor-pointer"><input type="checkbox" value="${escHTML(key)}" ${I.R.sources.includes(key) ? 'checked' : ''} class="w-4 h-4 accent-emerald-500"><i class="${icone} text-slate-400 w-4 text-center"></i><span class="flex-1 text-sm text-white truncate">${escHTML(nome)}</span><span class="sensitive text-xs text-slate-400">${formatCurrency(v)}</span></label>`;
+            document.getElementById('rsvSources').innerHTML =
+                S.accounts.map(a => linha('acc:' + a.name, a.name, Number(a.calculatedBalance ?? a.balance) || 0, 'fa-solid fa-building-columns')).join('') +
+                S.investments.map(i => linha('inv:' + i.id, i.name, Number(i.current) || Number(i.invested) || 0, 'fa-solid fa-arrow-trend-up')).join('') ||
+                '<p class="text-xs text-slate-400">Cadastre uma conta ou investimento primeiro.</p>';
+            document.getElementById('rsvExtra').value = Number(I.R.extra) || '';
+            document.getElementById('rsvCost').value = Number(I.R.cost) || '';
+            document.getElementById('rsvCost').placeholder = I.custo ? `Média: ${formatCurrency(I.custo)}` : '';
+            document.getElementById('reserveModal').classList.remove('hidden');
+        };
+        window.closeReserveModal = () => document.getElementById('reserveModal').classList.add('hidden');
+        window.saveReserve = function (e) {
+            e.preventDefault();
+            const R = S_().reserve, on = document.querySelector('#rsvMonthsChips .chip.on');
+            R.months = on ? Number(on.dataset.m) : 6;
+            R.sources = [...document.querySelectorAll('#rsvSources input:checked')].map(i => i.value);
+            R.extra = parseFloat(document.getElementById('rsvExtra').value) || 0;
+            R.cost = parseFloat(document.getElementById('rsvCost').value) || 0;
+            closeReserveModal(); saveAndRefresh(); showToast('Reserva atualizada');
+        };
+
         function renderSmartFeatures() {
             ensureSmartState();
             try { renderSafeToSpend(); } catch (e) { console.warn('safe-to-spend', e); }
@@ -4254,6 +4383,7 @@
             try { renderSubscriptions(); } catch (e) { console.warn('subs', e); }
             try { renderRules(); } catch (e) { console.warn('rules', e); }
             try { renderBills(); } catch (e) { console.warn('vencimentos', e); }
+            try { renderReserve(); } catch (e) { console.warn('reserva', e); }
         }
 
         window.isFirstLoad = true;
