@@ -93,6 +93,10 @@
         #quickAddSheet.open .sheet-panel { transform: translateY(0); }
         #quickAddSheet .sheet-backdrop { opacity: 0; transition: opacity .25s ease; }
         #quickAddSheet.open .sheet-backdrop { opacity: 1; }
+        #billsSheet .sheet-panel { transform: translateY(100%); transition: transform .25s ease; }
+        #billsSheet.open .sheet-panel { transform: translateY(0); }
+        #billsSheet .sheet-backdrop { opacity: 0; transition: opacity .25s ease; }
+        #billsSheet.open .sheet-backdrop { opacity: 1; }
 
         /* ===== Relatórios ===== */
         .rpt-chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; color: #6e6e73; background: #fff; border: 1px solid rgba(216,216,221,.7); transition: background .15s, color .15s; }
@@ -220,6 +224,12 @@
                         <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-tight truncate">Olá, <span id="sidebarUserName">bem-vindo(a)</span></p>
                         <h2 id="pageTitle" class="text-lg font-bold tracking-tight leading-tight truncate">Dashboard</h2>
                     </div>
+
+                    <!-- Sininho: vencimentos (lembretes) -->
+                    <button type="button" id="billsBellBtn" onclick="openBillsSheet()" title="Vencimentos" aria-label="Vencimentos" class="relative w-10 h-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-white/[0.07] flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition">
+                        <i class="fa-regular fa-bell text-sm"></i>
+                        <span id="billsBellBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold items-center justify-center ring-2 ring-[#f5f5f7] dark:ring-black"></span>
+                    </button>
 
                     <!-- Olho: ocultar/mostrar valores -->
                     <button type="button" id="eyeToggleBtn" onclick="toggleValuesVisibility()" aria-pressed="false" title="Ocultar valores" class="w-10 h-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-white/[0.07] flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition">
@@ -808,7 +818,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">27</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">28</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -839,6 +849,22 @@
                         </div>
                     </div>
                     <div>
+                        <h3 class="set-title">Lembretes de vencimento</h3>
+                        <div class="set-group">
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#f59e0b"><i class="fa-regular fa-bell"></i></span><span class="set-label">Avisar vencimentos</span>
+                                <button type="button" role="switch" id="settingsRemindSwitch" onclick="setReminders({ on: !S_reminders().on })" class="set-switch" aria-label="Avisar vencimentos"></button></div>
+                            <label class="set-row cursor-default"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-regular fa-calendar"></i></span><span class="set-label">Quando avisar</span>
+                                <select id="settingsRemindDays" onchange="setReminders({ days: Number(this.value) })" class="bg-transparent text-sm text-slate-500 dark:text-slate-400 text-right outline-none">
+                                    <option value="0">No dia</option><option value="1">1 dia antes e no dia</option><option value="3">3 dias antes e no dia</option>
+                                </select></label>
+                            <label class="set-row cursor-default"><span class="set-icon" style="--c:#8b5cf6"><i class="fa-regular fa-clock"></i></span><span class="set-label">Horário do aviso</span>
+                                <select id="settingsRemindHour" onchange="setReminders({ hour: Number(this.value) })" class="bg-transparent text-sm text-slate-500 dark:text-slate-400 text-right outline-none">
+                                    <option value="7">07:00</option><option value="9">09:00</option><option value="12">12:00</option><option value="18">18:00</option><option value="20">20:00</option>
+                                </select></label>
+                        </div>
+                        <p id="settingsRemindStatus" class="text-[11px] text-slate-400 px-4 mt-2"></p>
+                    </div>
+                    <div>
                         <h3 class="set-title">Dados</h3>
                         <div class="set-group">
                         <button type="button" onclick="exportDataCSV()" class="set-row"><span class="set-icon" style="--c:#3b82f6"><i class="fa-solid fa-file-export"></i></span><span class="set-label">Exportar dados (CSV)</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
@@ -847,7 +873,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">27</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">28</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -872,6 +898,27 @@
             <button type="button" data-nav="profile" data-nav-group="accounts cards recurring goals investments categories budgets" class="bnav-item"><i class="fa-solid fa-user"></i><span>Perfil</span></button>
         </div>
     </nav>
+
+    <!-- ===================== SHEET "VENCIMENTOS" (sininho) ===================== -->
+    <div id="billsSheet" class="hidden fixed inset-0 z-[55]" role="dialog" aria-modal="true" aria-label="Vencimentos">
+        <div class="sheet-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeBillsSheet()"></div>
+        <div class="sheet-panel absolute bottom-0 inset-x-0 md:inset-x-auto md:right-8 md:bottom-8 md:w-[26rem] max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 rounded-t-3xl md:rounded-3xl border-t md:border border-slate-200/70 dark:border-white/[0.08] safe-bottom">
+            <div class="p-5 pb-3">
+                <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto mb-4 md:hidden"></div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-base">Vencimentos</h3>
+                        <p id="billsSheetSub" class="text-[11px] text-slate-400"></p>
+                    </div>
+                    <button type="button" onclick="closeBillsSheet()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div id="billsSheetList" class="flex-1 overflow-y-auto custom-scroll px-5 pb-3"></div>
+            <div class="px-5 pt-2 pb-5 border-t border-slate-100 dark:border-white/[0.06]">
+                <button type="button" onclick="closeBillsSheet(); (window.navTo||switchTab)('profile'); openProfileSub('settings')" class="w-full flex items-center justify-center gap-2 text-xs font-semibold text-emerald-500 pt-2"><i class="fa-solid fa-gear"></i><span id="billsSheetCfg">Configurar lembretes</span></button>
+            </div>
+        </div>
+    </div>
 
     <!-- ===================== SHEET "ADICIONAR" (+) ===================== -->
     <div id="quickAddSheet" class="hidden fixed inset-0 z-[55]" role="dialog" aria-modal="true" aria-label="Novo lançamento">
@@ -1399,7 +1446,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 27;
+        var APP_VERSION = 28;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1477,7 +1524,7 @@
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1515,6 +1562,7 @@
             goals: JSON.parse(localStorage.getItem('df_goals')) || [],
             debts: JSON.parse(localStorage.getItem('df_debts')) || [],
             debtPlan: JSON.parse(localStorage.getItem('df_debtPlan')) || { strategy: 'avalanche', extra: 0, reserveGoal: 500 },
+            reminders: JSON.parse(localStorage.getItem('df_reminders')) || { on: true, days: 1, hour: 9 },
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -3298,6 +3346,7 @@
             const S = S_();
             if (!Array.isArray(S.rules)) S.rules = [];
             if (!Array.isArray(S.ignoredSubs)) S.ignoredSubs = [];
+            if (!S.reminders || typeof S.reminders !== 'object') S.reminders = { on: true, days: 1, hour: 9 };
         }
         function normDesc(d) { return String(d || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
         const DESC_PREFIX = /^(entrada\s+pix|sa[ií]da\s+pix|pix\s+(enviado\s+para|recebido\s+de)|transfer[eê]ncia\s+(enviada\s+para|recebida\s+de)|d[eé]bito\s+de\s+cart[aã]o|compra\s+(no\s+)?(d[eé]bito|cr[eé]dito)|pagamento\s+de\s+boleto|pagamento\s+de\s+fatura|pagamento|outros\s+gastos|ted|doc)\s*[-:]?\s*/i;
@@ -3967,12 +4016,151 @@
             showToast('Imagem salva');
         };
 
+
+        // =====================================================================
+        // LEMBRETES DE VENCIMENTO: contas pendentes, fixas, faturas e parcelas de dívidas.
+        // O sininho do topo mostra a lista; no app Android vira notificação no celular.
+        // =====================================================================
+        window.S_reminders = () => { ensureSmartState(); return S_().reminders; };
+        const BILL_KIND = {
+            pend: { icon: 'fa-regular fa-file-lines', cor: '#f59e0b', nome: 'Conta lançada' },
+            rec:  { icon: 'fa-solid fa-rotate', cor: '#0ea5e9', nome: 'Conta fixa' },
+            card: { icon: 'fa-regular fa-credit-card', cor: '#f43f5e', nome: 'Fatura do cartão' },
+            debt: { icon: 'fa-solid fa-person-running', cor: '#8b5cf6', nome: 'Parcela de dívida' }
+        };
+        // Tudo que vence de hoje até "horizonte" dias (e o que já está atrasado)
+        function upcomingBills(horizonte = 31) {
+            const S = S_(), hoje = new Date(), hojeISO = isoDate(hoje), thisYM = hojeISO.slice(0, 7);
+            const limite = isoDate(new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + horizonte));
+            const dateIn = (ym, day) => `${ym}-${String(Math.min(Number(day) || 1, lastDayOf(ym))).padStart(2, '0')}`;
+            const dentro = d => d >= hojeISO && d <= limite;
+            const lancadoNoMes = (nome, ym) => { const n = normDesc(nome); return n && S.transactions.some(t => t.type === 'expense' && String(t.date).slice(0, 7) === ym && normDesc(t.desc).includes(n)); };
+            const itens = [];
+            // 1) Despesas lançadas e ainda não pagas (sem conta)
+            S.transactions.forEach(t => {
+                if (t.type !== 'expense' || t.account || !t.date || t.date > limite) return;
+                itens.push({ id: 'pend:' + t.id, kind: 'pend', nome: t.desc || 'Sem descrição', valor: Number(t.amount) || 0, data: t.date, ref: t.id });
+            });
+            // 2) Contas fixas (se ainda não foram lançadas naquele mês)
+            S.recurring.filter(r => r.type === 'expense').forEach(r => {
+                [thisYM, ymAdd(thisYM, 1)].forEach(ym => {
+                    const d = dateIn(ym, r.day);
+                    if (dentro(d) && !lancadoNoMes(r.desc, ym)) itens.push({ id: `rec:${r.id}:${ym}`, kind: 'rec', nome: r.desc, valor: Number(r.amount) || 0, data: d, ref: r.id });
+                });
+            });
+            // 3) Faturas dos cartões (compras do mês anterior ao vencimento)
+            S.cards.forEach(c => {
+                const due = Number(c.dueDay || c.due) || 10;
+                [thisYM, ymAdd(thisYM, 1)].forEach(ym => {
+                    const d = dateIn(ym, due); if (!dentro(d)) return;
+                    const closeYM = ymAdd(ym, -1);
+                    const v = S.transactions.filter(t => t.type === 'expense' && t.account === c.name && String(t.date).slice(0, 7) === closeYM).reduce((a, t) => a + (Number(t.amount) || 0), 0);
+                    if (v > 0) itens.push({ id: `card:${c.id || c.name}:${ym}`, kind: 'card', nome: `Fatura ${c.name}`, valor: v, data: d, ref: c.id });
+                });
+            });
+            // 4) Próxima parcela de cada dívida em aberto
+            (S.debts || []).filter(d => debtLeft(d) > 0).forEach(d => {
+                let ym = d.start && /^\d{4}-\d{2}$/.test(d.start) && d.start > thisYM ? d.start : thisYM;
+                if (dateIn(ym, d.day) < hojeISO) ym = ymAdd(ym, 1);
+                const data = dateIn(ym, d.day), palavra = String(d.name || '').split(/\s+/)[0];
+                if (!dentro(data) || (palavra.length > 2 && lancadoNoMes(palavra, ym))) return;
+                itens.push({ id: `debt:${d.id}:${ym}`, kind: 'debt', nome: `${d.name} · parcela ${(Number(d.paid) || 0) + 1}/${d.total}`, valor: Number(d.parcel) || 0, data, ref: d.id });
+            });
+            return itens.sort((a, b) => a.data.localeCompare(b.data) || b.valor - a.valor);
+        }
+        const diasAte = iso => Math.round((new Date(iso + 'T12:00:00') - new Date(isoDate(new Date()) + 'T12:00:00')) / 86400000);
+        const quandoTxt = iso => { const n = diasAte(iso); return n < 0 ? (n === -1 ? 'Venceu ontem' : `Venceu há ${-n} dias`) : n === 0 ? 'Vence hoje' : n === 1 ? 'Vence amanhã' : `Vence em ${n} dias · ${fmtDateBR(iso).slice(0, 5)}`; };
+
+        function renderBills() {
+            const itens = upcomingBills(), r = S_reminders();
+            const urgentes = itens.filter(i => diasAte(i.data) <= 3).length;
+            const badge = document.getElementById('billsBellBadge');
+            if (badge) { badge.textContent = urgentes > 9 ? '9+' : String(urgentes); badge.classList.toggle('hidden', !urgentes); badge.classList.toggle('flex', !!urgentes); }
+            // Configurações
+            const sw = document.getElementById('settingsRemindSwitch'); if (sw) sw.setAttribute('aria-checked', String(!!r.on));
+            const sd = document.getElementById('settingsRemindDays'); if (sd) sd.value = String(r.days);
+            const sh = document.getElementById('settingsRemindHour'); if (sh) sh.value = String(r.hour);
+            const st = document.getElementById('settingsRemindStatus');
+            if (st) st.textContent = !r.on ? 'Lembretes desligados. O sininho continua mostrando o que vence.'
+                : nativeReminders() && typeof window.AndroidApp.notificationsAllowed === 'function' && !window.AndroidApp.notificationsAllowed() ? 'As notificações estão bloqueadas. Libere em Configurações do Android > Apps > Controle Financeiro > Notificações.'
+                : nativeReminders() ? `Notificações ligadas neste celular · ${agendaNotificacoes(itens).length} aviso(s) agendado(s) para os próximos 30 dias.`
+                : window.AndroidApp ? 'Para receber notificações, instale a versão nova do app (Releases no GitHub). Até lá, os avisos aparecem no sininho.'
+                : 'No navegador os avisos aparecem no sininho 🔔. No app Android eles chegam como notificação no celular.';
+            if (!document.getElementById('billsSheet').classList.contains('hidden')) renderBillsSheet(itens);
+            syncNativeReminders(itens);
+        }
+        function renderBillsSheet(itens = upcomingBills()) {
+            const grupos = [
+                ['Atrasadas', itens.filter(i => diasAte(i.data) < 0), 'text-rose-400'],
+                ['Hoje', itens.filter(i => diasAte(i.data) === 0), 'text-amber-400'],
+                ['Próximos 7 dias', itens.filter(i => { const n = diasAte(i.data); return n > 0 && n <= 7; }), 'text-slate-400'],
+                ['Mais adiante', itens.filter(i => diasAte(i.data) > 7), 'text-slate-400']
+            ].filter(g => g[1].length);
+            const total7 = itens.filter(i => diasAte(i.data) <= 7).reduce((a, i) => a + i.valor, 0);
+            document.getElementById('billsSheetSub').innerHTML = itens.length ? `<span class="sensitive">${formatCurrency(total7)}</span> até os próximos 7 dias` : 'Próximos 30 dias';
+            document.getElementById('billsSheetCfg').textContent = S_reminders().on ? `Avisos ${['no dia', '1 dia antes', '', '3 dias antes'][S_reminders().days] || ''} às ${String(S_reminders().hour).padStart(2, '0')}:00 · Configurar` : 'Lembretes desligados · Configurar';
+            document.getElementById('billsSheetList').innerHTML = grupos.length ? grupos.map(([titulo, lista, cor]) => `
+                <p class="text-[11px] font-bold uppercase tracking-wider ${cor} mt-3 mb-1">${titulo}</p>
+                <div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${lista.map(i => {
+                    const k = BILL_KIND[i.kind], n = diasAte(i.data);
+                    const acao = i.kind === 'pend' ? `<button type="button" onclick="closeBillsSheet(); openPayModal('${i.ref}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">Pagar</button>`
+                        : i.kind === 'debt' ? `<button type="button" onclick="payDebtInstallment('${i.ref}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold">Paguei</button>` : '';
+                    return `<div class="flex items-center gap-3 py-3">
+                        <span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center" style="background:color-mix(in srgb, ${k.cor} 16%, transparent);color:${k.cor}"><i class="${k.icon}"></i></span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold truncate">${escHTML(i.nome)}</p>
+                            <p class="text-[11px] ${n < 0 ? 'text-rose-400 font-semibold' : n === 0 ? 'text-amber-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}">${quandoTxt(i.data)} · ${k.nome}</p>
+                        </div>
+                        <div class="text-right shrink-0"><p class="sensitive text-sm font-semibold">${formatCurrency(i.valor)}</p>${acao}</div>
+                    </div>`; }).join('')}</div>`).join('')
+                : `<div class="flex flex-col items-center text-center py-10"><span class="w-12 h-12 rounded-2xl flex items-center justify-center bg-emerald-500/15 text-emerald-400 mb-3"><i class="fa-solid fa-check"></i></span><p class="text-sm font-semibold">Nada vencendo nos próximos 30 dias</p><p class="text-xs text-slate-400 mt-1">Cadastre contas fixas, cartões e dívidas para receber avisos.</p></div>`;
+        }
+        let billsCloseTimer = null;
+        window.openBillsSheet = function () {
+            const sh = document.getElementById('billsSheet'); clearTimeout(billsCloseTimer);
+            renderBillsSheet(); sh.classList.remove('hidden');
+            requestAnimationFrame(() => requestAnimationFrame(() => sh.classList.add('open')));
+        };
+        window.closeBillsSheet = function () {
+            const sh = document.getElementById('billsSheet'); sh.classList.remove('open');
+            billsCloseTimer = setTimeout(() => sh.classList.add('hidden'), 250);
+        };
+        window.setReminders = function (patch) { Object.assign(S_reminders(), patch); saveAndRefresh(); };
+
+        // ---------- Notificações no celular (app Android) ----------
+        const nativeReminders = () => !!(window.AndroidApp && typeof window.AndroidApp.scheduleReminders === 'function');
+        function agendaNotificacoes(itens) {
+            const r = S_reminders(); if (!r.on) return [];
+            const agora = Date.now(), lista = [];
+            itens.forEach(i => {
+                const n = diasAte(i.data);
+                [...new Set([r.days, 0])].forEach(antes => {
+                    const [y, m, d] = i.data.split('-').map(Number);
+                    const at = new Date(y, m - 1, d - antes, Number(r.hour) || 9, 0, 0).getTime();
+                    if (at <= agora) return;
+                    const titulo = antes === 0 ? 'Vence hoje' : antes === 1 ? 'Vence amanhã' : `Vence em ${antes} dias`;
+                    lista.push({ id: `${i.id}:${antes}`, at, title: `${titulo}: ${i.nome}`, text: `${BILL_KIND[i.kind].nome} · ${formatCurrency(i.valor)} · ${fmtDateBR(i.data)}` });
+                });
+                if (n < 0) lista.push({ id: `${i.id}:atraso`, at: new Date(new Date().setHours(Number(r.hour) || 9, 0, 0, 0) + (new Date().getHours() >= (Number(r.hour) || 9) ? 86400000 : 0)).getTime(), title: `Atrasada: ${i.nome}`, text: `${quandoTxt(i.data)} · ${formatCurrency(i.valor)}` });
+            });
+            return lista.sort((a, b) => a.at - b.at).slice(0, 60);
+        }
+        let ultimaAgenda = null;
+        function syncNativeReminders(itens) {
+            if (!nativeReminders()) return;
+            const json = JSON.stringify(agendaNotificacoes(itens));
+            if (json === ultimaAgenda) return;
+            ultimaAgenda = json;
+            try { window.AndroidApp.scheduleReminders(json); } catch (e) { console.warn('lembretes', e); }
+        }
+
         function renderSmartFeatures() {
             ensureSmartState();
             try { renderSafeToSpend(); } catch (e) { console.warn('safe-to-spend', e); }
             try { renderDebts(); } catch (e) { console.warn('dividas', e); }
             try { renderSubscriptions(); } catch (e) { console.warn('subs', e); }
             try { renderRules(); } catch (e) { console.warn('rules', e); }
+            try { renderBills(); } catch (e) { console.warn('vencimentos', e); }
         }
 
         window.isFirstLoad = true;
