@@ -168,8 +168,9 @@
         .pill-select { appearance: none; -webkit-appearance: none; flex-shrink: 0; padding: 8px 30px 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
             background: rgba(255,255,255,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a1a1aa' stroke-width='1.6' fill='none'/%3E%3C/svg%3E") no-repeat right 12px center;
             border: 1px solid rgba(255,255,255,.08); color: #e4e4e7; max-width: 190px; }
-        .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.06); }
-        .seg button { padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #a1a1aa; }
+        .seg { display: inline-flex; max-width: 100%; overflow-x: auto; scrollbar-width: none; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.06); }
+        .seg::-webkit-scrollbar { display: none; }
+        .seg button { flex-shrink: 0; white-space: nowrap; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #a1a1aa; }
         .seg button.on { background: #00d084; color: #000; }
         .tx-day { display: flex; align-items: center; justify-content: space-between; padding: 14px 4px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8e8e93; }
         .tx-card { border-radius: 22px; overflow: hidden; background: linear-gradient(180deg, #151517, #0f0f11); border: 1px solid rgba(255,255,255,.06); }
@@ -437,6 +438,7 @@
                     <button type="button" data-txtype="income" onclick="setTxType('income')">Entradas</button>
                     <button type="button" data-txtype="expense" onclick="setTxType('expense')">Saídas</button>
                     <button type="button" data-txtype="pending" onclick="setTxType('pending')">A pagar</button>
+                    <button type="button" data-txtype="transfer" onclick="setTxType('transfer')">Transferências</button>
                 </div>
 
                     <!-- Barra de seleção em massa -->
@@ -603,7 +605,7 @@
 
             <!-- OUTRAS ABAS -->
             <div id="tab-accounts" class="space-y-6 hidden max-w-7xl mx-auto">
-                <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Contas e Carteiras</h2><button onclick="openAccountModal()" class="bg-slate-900 dark:bg-emerald-500 text-white dark:text-black px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90">+ Nova Conta</button></div>
+                <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Contas e Carteiras</h2><div class="flex gap-2"><button onclick="openTransferModal()" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90"><i class="fa-solid fa-right-left mr-1"></i>Transferir</button><button onclick="openAccountModal()" class="bg-slate-900 dark:bg-emerald-500 text-white dark:text-black px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90">+ Nova Conta</button></div></div>
                 <div id="accountsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
@@ -818,7 +820,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">28</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">29</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -873,7 +875,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">28</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">29</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -942,7 +944,11 @@
                     <span class="qa-ico"><i class="fa-regular fa-credit-card"></i></span>
                     <span><span class="block text-sm font-bold">Parcelada</span><span class="block text-[11px] text-slate-400 mt-0.5">Compra em várias vezes</span></span>
                 </button>
-                <label onclick="closeQuickAdd()" class="qa-tile cursor-pointer" style="--c:#38bdf8">
+                <button type="button" onclick="closeQuickAdd(); openTransferModal()" class="qa-tile" style="--c:#0ea5e9">
+                    <span class="qa-ico"><i class="fa-solid fa-right-left"></i></span>
+                    <span><span class="block text-sm font-bold">Transferência</span><span class="block text-[11px] text-slate-400 mt-0.5">Entre suas contas, não conta como gasto</span></span>
+                </button>
+                <label onclick="closeQuickAdd()" class="qa-tile col-span-2 cursor-pointer" style="--c:#38bdf8">
                     <span class="qa-ico"><i class="fa-solid fa-file-import"></i></span>
                     <span><span class="block text-sm font-bold">Importar extrato</span><span class="block text-[11px] text-slate-400 mt-0.5">OFX, CSV ou PDF do banco</span></span>
                     <input type="file" id="importFile" accept=".ofx,.csv,.json,.pdf,application/pdf,text/csv,application/json,application/x-ofx,application/octet-stream" onchange="importExtratoBancario(event)" class="hidden">
@@ -955,6 +961,23 @@
     <!-- === MODAIS === -->
 
     <!-- === MODAIS === -->
+
+    <div id="transferModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+        <form onsubmit="saveTransfer(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-3 border border-slate-200 dark:border-white/[0.08]">
+            <div class="flex justify-between items-center"><h3 class="font-bold text-lg">Transferência entre contas</h3><button type="button" onclick="closeTransferModal()" class="text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
+            <p class="text-[12px] text-slate-400">O dinheiro sai de uma conta e entra na outra. Não conta como receita nem como despesa nos relatórios.</p>
+            <label class="block text-[11px] text-slate-400">De (sai daqui)<select id="trFrom" onchange="updateTransferPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></select></label>
+            <div class="flex justify-center -my-1"><button type="button" onclick="swapTransfer()" class="w-9 h-9 rounded-full bg-sky-500/15 text-sky-400 flex items-center justify-center" title="Inverter" aria-label="Inverter contas"><i class="fa-solid fa-arrow-down-up-across-line"></i></button></div>
+            <label class="block text-[11px] text-slate-400">Para (entra aqui)<select id="trTo" onchange="updateTransferPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></select></label>
+            <div class="grid grid-cols-2 gap-2">
+                <label class="text-[11px] text-slate-400">Valor<input id="trAmount" type="number" step="0.01" min="0.01" required oninput="updateTransferPreview()" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+                <label class="text-[11px] text-slate-400">Data<input id="trDate" type="date" required class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+            </div>
+            <label class="block text-[11px] text-slate-400">Descrição <span class="text-slate-500">(opcional)</span><input id="trDesc" placeholder="Ex.: Guardar para a reserva" class="mt-1 w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"></label>
+            <p id="trPreview" class="text-[12px] font-semibold text-sky-400 min-h-[18px]"></p>
+            <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Transferir</button>
+        </form>
+    </div>
 
     <div id="debtModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
         <form onsubmit="saveDebt(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-3 border border-slate-200 dark:border-white/[0.08]">
@@ -1446,7 +1469,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 28;
+        var APP_VERSION = 29;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1524,7 +1547,7 @@
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1563,6 +1586,7 @@
             debts: JSON.parse(localStorage.getItem('df_debts')) || [],
             debtPlan: JSON.parse(localStorage.getItem('df_debtPlan')) || { strategy: 'avalanche', extra: 0, reserveGoal: 500 },
             reminders: JSON.parse(localStorage.getItem('df_reminders')) || { on: true, days: 1, hour: 9 },
+            transfers: JSON.parse(localStorage.getItem('df_transfers')) || [],
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -2184,7 +2208,8 @@
                 const maxRow = novas.reduce((m, t) => t.date > m ? t.date : m, '0000');
                 const lastDate = opts.closingDate && opts.closingDate > maxRow ? opts.closingDate : maxRow;   // o saldo final já inclui todas as linhas do extrato
                 const net = S.transactions.filter(t => t.account === acc.name && t.date <= lastDate)
-                    .reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
+                    .reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0)
+                    + (S.transfers || []).filter(tr => tr.date <= lastDate).reduce((s, tr) => s + (tr.to === acc.name ? tr.amount : 0) - (tr.from === acc.name ? tr.amount : 0), 0);
                 const newBal = Math.round((opts.closingBalance - net) * 100) / 100;
                 adjusted = Math.abs((Number(acc.balance) || 0) - newBal) > 0.009;
                 acc.balance = newBal;
@@ -2494,6 +2519,8 @@
                 let accTot = Number(a.balance) || 0, futNet = 0, futN = 0;
                 const todayISO = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
                 window.appState.transactions.forEach(t => { if (t.account === a.name) { const v = t.type === 'income' ? t.amount : -t.amount; if (t.date > todayISO) { futNet += v; futN++; } else accTot += v; } });
+                // Transferências entre contas: não são receita nem despesa, só mudam o dinheiro de lugar
+                (window.appState.transfers || []).forEach(tr => { const v = tr.from === a.name ? -tr.amount : tr.to === a.name ? tr.amount : 0; if (!v) return; if (tr.date > todayISO) { futNet += v; futN++; } else accTot += v; });
                 totalAcc += accTot; a.calculatedBalance = accTot; a.futureNet = futNet; a.futureCount = futN;
             });
             window.appState.investments.forEach(i => totalInv += (Number(i.current)||Number(i.invested)||0));
@@ -2875,10 +2902,16 @@
             document.getElementById('txSumOut').textContent = formatCurrency(sai);
             const net = document.getElementById('txSumNet'); net.textContent = formatCurrency(ent - sai);
             net.className = `sensitive text-[13px] font-bold whitespace-nowrap ${ent - sai < 0 ? 'text-rose-400' : 'text-white'}`;
-            document.getElementById('txCount').textContent = `${lista.length} lançamento(s)`;
+            const trs = (tipo === 'all' || tipo === 'transfer') ? (window.appState.transfers || []).filter(tr => {
+                const [tY, tM] = tr.date.split('-');
+                return (`${tr.desc || ''} ${tr.from} ${tr.to} transferência`.toLowerCase().includes(search))
+                    && (acc === 'all' || tr.from === acc || tr.to === acc) && (month === 'all' || tM === month) && (year === 'all' || tY === year) && (source === 'all' || source === 'manual');
+            }).map(tr => ({ ...tr, __tr: true })) : [];
+            const vista = (tipo === 'transfer' ? trs : [...lista, ...trs]).sort((a, b) => b.date.localeCompare(a.date));
+            document.getElementById('txCount').textContent = `${lista.length} lançamento(s)` + (trs.length ? ` · ${trs.length} transferência(s)` : '');
             const box = document.getElementById('transactionTableBody'), empty = document.getElementById('emptyState');
             updateTxBulkBar();
-            if (lista.length === 0) { box.innerHTML = ''; empty.classList.remove('hidden'); return; }
+            if (vista.length === 0) { box.innerHTML = ''; empty.classList.remove('hidden'); return; }
             empty.classList.add('hidden');
 
             const CORES = ['#00d084', '#8b5cf6', '#f43f5e', '#f59e0b', '#38bdf8', '#ec4899'];
@@ -2890,11 +2923,20 @@
             const rotulo = d => d === hojeISO ? 'Hoje' : d === ontemISO ? 'Ontem' : `${DIAS[new Date(d + 'T12:00:00').getDay()]}, ${d.slice(8, 10)} ${MONTH_SHORT[Number(d.slice(5, 7)) - 1]}`;
 
             const grupos = [];
-            lista.forEach(t => { const g = grupos[grupos.length - 1]; if (g && g.d === t.date) g.itens.push(t); else grupos.push({ d: t.date, itens: [t] }); });
+            vista.forEach(t => { const g = grupos[grupos.length - 1]; if (g && g.d === t.date) g.itens.push(t); else grupos.push({ d: t.date, itens: [t] }); });
             box.innerHTML = grupos.map(g => {
-                const saldoDia = g.itens.reduce((a, t) => a + (t.type === 'income' ? t.amount : -t.amount), 0);
-                return `<div class="tx-day"><span>${rotulo(g.d)}</span><span class="sensitive normal-case tracking-normal font-semibold ${saldoDia < 0 ? 'text-slate-400' : 'text-emerald-400'}">${saldoDia < 0 ? '−' : '+'} ${formatCurrency(Math.abs(saldoDia))}</span></div>
+                const saldoDia = g.itens.reduce((a, t) => a + (t.__tr ? 0 : t.type === 'income' ? t.amount : -t.amount), 0);
+                return `<div class="tx-day"><span>${rotulo(g.d)}</span>${g.itens.every(t => t.__tr) ? '' : `<span class="sensitive normal-case tracking-normal font-semibold ${saldoDia < 0 ? 'text-slate-400' : 'text-emerald-400'}">${saldoDia < 0 ? '−' : '+'} ${formatCurrency(Math.abs(saldoDia))}</span>`}</div>
                 <div class="tx-card">${g.itens.map(t => {
+                    if (t.__tr) return `<div class="tx-item">
+                        <span class="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-sky-400" style="background:#38bdf822;border:1px solid #38bdf833"><i class="fa-solid fa-right-left"></i></span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium leading-snug line-clamp-2">${escHTML(t.desc || 'Transferência entre contas')}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5 truncate">${escHTML(t.from)} <i class="fa-solid fa-arrow-right text-[8px] mx-0.5"></i> ${escHTML(t.to)}</p>
+                        </div>
+                        <div class="text-right shrink-0"><p class="sensitive text-sm font-semibold whitespace-nowrap text-sky-400">${formatCurrency(t.amount)}</p><p class="text-[10px] text-slate-500">Transferência</p></div>
+                        ${txSel.active ? '' : `<button type="button" onclick="event.stopPropagation(); deleteTransfer('${t.id}')" class="w-7 h-7 shrink-0 rounded-full text-slate-600 hover:text-rose-500 flex items-center justify-center" aria-label="Excluir"><i class="fa-solid fa-trash text-[11px]"></i></button>`}
+                    </div>`;
                     const isInc = t.type === 'income', pend = !isInc && !t.account, checked = txSel.ids.has(t.id), cor = corDe(t.category);
                     return `<div class="tx-item ${txSel.active ? 'cursor-pointer' : ''} ${checked ? 'bg-emerald-500/10' : ''}" ${txSel.active ? `onclick="toggleTxSelect('${t.id}')"` : ''}>
                         ${txSel.active ? `<input type="checkbox" ${checked ? 'checked' : ''} class="w-4 h-4 accent-emerald-500 pointer-events-none shrink-0" aria-label="Selecionar">` : ''}
@@ -3347,6 +3389,7 @@
             if (!Array.isArray(S.rules)) S.rules = [];
             if (!Array.isArray(S.ignoredSubs)) S.ignoredSubs = [];
             if (!S.reminders || typeof S.reminders !== 'object') S.reminders = { on: true, days: 1, hour: 9 };
+            if (!Array.isArray(S.transfers)) S.transfers = [];
         }
         function normDesc(d) { return String(d || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
         const DESC_PREFIX = /^(entrada\s+pix|sa[ií]da\s+pix|pix\s+(enviado\s+para|recebido\s+de)|transfer[eê]ncia\s+(enviada\s+para|recebida\s+de)|d[eé]bito\s+de\s+cart[aã]o|compra\s+(no\s+)?(d[eé]bito|cr[eé]dito)|pagamento\s+de\s+boleto|pagamento\s+de\s+fatura|pagamento|outros\s+gastos|ted|doc)\s*[-:]?\s*/i;
@@ -4153,6 +4196,56 @@
             ultimaAgenda = json;
             try { window.AndroidApp.scheduleReminders(json); } catch (e) { console.warn('lembretes', e); }
         }
+
+
+        // =====================================================================
+        // TRANSFERÊNCIA ENTRE CONTAS: fica em appState.transfers (fora dos lançamentos),
+        // então não entra em receitas, despesas, categorias nem limites — só muda o saldo das contas.
+        // =====================================================================
+        window.openTransferModal = function (fromName) {
+            const accs = S_().accounts;
+            if (accs.length < 2) { showToast('Cadastre pelo menos 2 contas para transferir'); (window.navTo || switchTab)('accounts'); return; }
+            const opts = accs.map(a => `<option value="${escHTML(a.name)}">${escHTML(a.name)} · ${formatCurrency(a.calculatedBalance ?? a.balance ?? 0)}</option>`).join('');
+            const f = document.getElementById('trFrom'), t = document.getElementById('trTo');
+            f.innerHTML = opts; t.innerHTML = opts;
+            f.value = fromName && accs.some(a => a.name === fromName) ? fromName : accs[0].name;
+            t.value = (accs.find(a => a.name !== f.value) || accs[1]).name;
+            document.getElementById('trAmount').value = '';
+            document.getElementById('trDate').value = isoDate(new Date());
+            document.getElementById('trDesc').value = '';
+            updateTransferPreview();
+            document.getElementById('transferModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('trAmount').focus(), 50);
+        };
+        window.closeTransferModal = () => document.getElementById('transferModal').classList.add('hidden');
+        window.swapTransfer = function () {
+            const f = document.getElementById('trFrom'), t = document.getElementById('trTo'), x = f.value;
+            f.value = t.value; t.value = x; updateTransferPreview();
+        };
+        window.updateTransferPreview = function () {
+            const from = document.getElementById('trFrom').value, to = document.getElementById('trTo').value;
+            const v = parseFloat(document.getElementById('trAmount').value) || 0, el = document.getElementById('trPreview');
+            if (from === to) { el.className = 'text-[12px] font-semibold text-rose-400 min-h-[18px]'; el.textContent = 'Escolha contas diferentes.'; return; }
+            el.className = 'text-[12px] font-semibold text-sky-400 min-h-[18px]';
+            if (!v) { el.textContent = ''; return; }
+            const saldo = n => { const a = S_().accounts.find(x => x.name === n); return a ? Number(a.calculatedBalance ?? a.balance) || 0 : 0; };
+            el.textContent = `${from}: ${formatCurrency(saldo(from) - v)}  ·  ${to}: ${formatCurrency(saldo(to) + v)}`;
+        };
+        window.saveTransfer = function (e) {
+            e.preventDefault();
+            const from = document.getElementById('trFrom').value, to = document.getElementById('trTo').value;
+            const amount = Math.round((parseFloat(document.getElementById('trAmount').value) || 0) * 100) / 100;
+            if (from === to) { showToast('Escolha contas diferentes'); return; }
+            if (amount <= 0) { showToast('Informe o valor'); return; }
+            ensureSmartState();
+            S_().transfers.push({ id: 'tr_' + Date.now(), from, to, amount, date: document.getElementById('trDate').value || isoDate(new Date()), desc: document.getElementById('trDesc').value.trim() });
+            closeTransferModal(); saveAndRefresh();
+            showToast(`${formatCurrency(amount)} de ${from} para ${to}`);
+        };
+        window.deleteTransfer = function (id) {
+            if (!confirm('Excluir esta transferência? O dinheiro volta para a conta de origem.')) return;
+            S_().transfers = (S_().transfers || []).filter(t => t.id !== id); saveAndRefresh();
+        };
 
         function renderSmartFeatures() {
             ensureSmartState();
