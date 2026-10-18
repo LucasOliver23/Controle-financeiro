@@ -881,7 +881,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">34</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">35</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -967,7 +967,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">34</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">35</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1054,6 +1054,19 @@
 
     <!-- === MODAIS === -->
 
+    <div id="receiptViewer" class="hidden fixed inset-0 z-[70] bg-black flex flex-col" role="dialog" aria-modal="true" aria-label="Comprovante">
+        <div class="flex items-center justify-between p-4" style="padding-top:calc(16px + env(safe-area-inset-top))">
+            <p id="receiptViewerTitle" class="text-sm font-semibold text-white truncate pr-3"></p>
+            <button type="button" onclick="closeReceipt()" class="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center shrink-0" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 flex items-center justify-center px-4"><img id="receiptViewerImg" alt="Comprovante" class="max-w-full max-h-full rounded-xl object-contain"></div>
+        <p id="receiptViewerInfo" class="text-center text-[11px] text-white/50 mt-3"></p>
+        <div class="grid grid-cols-2 gap-3 p-4" style="padding-bottom:calc(16px + env(safe-area-inset-bottom))">
+            <button type="button" onclick="saveReceipt()" class="py-3 rounded-full bg-white/10 text-white text-sm font-semibold"><i class="fa-solid fa-download mr-1"></i>Salvar no celular</button>
+            <button type="button" onclick="removeReceipt()" class="py-3 rounded-full bg-rose-500/20 text-rose-300 text-sm font-semibold"><i class="fa-solid fa-trash mr-1"></i>Remover</button>
+        </div>
+    </div>
+
     <div id="reserveModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
         <form onsubmit="saveReserve(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-4 border border-slate-200 dark:border-white/[0.08]">
             <div class="flex justify-between items-center"><h3 class="font-bold text-lg">Configurar reserva</h3><button type="button" onclick="closeReserveModal()" class="text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
@@ -1124,6 +1137,10 @@
                 <select id="txAccount" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
                 <select id="txCategory" required onchange="fillSubSelect('txSub', this.value)" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
                 <select id="txSub" class="hidden w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white"></select>
+                <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 cursor-pointer">
+                    <i class="fa-solid fa-paperclip"></i><span id="txReceiptName" class="flex-1 truncate">Anexar comprovante (foto)</span>
+                    <input type="file" id="txReceiptInput" accept="image/*" class="hidden" onchange="document.getElementById('txReceiptName').textContent = this.files[0] ? '📎 ' + this.files[0].name : 'Anexar comprovante (foto)'">
+                </label>
                 <div id="txTagsBox" class="hidden"><p class="text-[11px] text-slate-400 mb-1.5">Etiquetas</p><div id="txTags" class="flex flex-wrap gap-1.5"></div></div>
                 <input type="hidden" id="txType" value="expense">
                 <div class="pt-2">
@@ -1327,12 +1344,17 @@
     <div id="catEditModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="catEditTitle">
         <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-4 shadow-2xl border border-slate-200 dark:border-white/[0.08]" style="padding-bottom: calc(24px + env(safe-area-inset-bottom))">
             <div class="flex items-center justify-between">
-                <h3 id="catEditTitle" class="font-bold text-lg">Categoria do lançamento</h3>
+                <h3 id="catEditTitle" class="font-bold text-lg">Detalhes do lançamento</h3>
                 <button type="button" onclick="closeCatEdit()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <p id="catEditDesc" class="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-black rounded-xl p-3 break-words"></p>
             <select id="catEditSelect" onchange="fillSubSelect('catEditSub', this.value)" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
             <select id="catEditSub" class="hidden w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm text-slate-900 dark:text-white"></select>
+            <div>
+                <p class="text-[11px] text-slate-400 mb-1.5">Comprovante</p>
+                <div id="catEditReceipt" class="flex items-center gap-3"></div>
+                <input type="file" id="receiptInput" accept="image/*" class="hidden" onchange="attachReceipt(this)">
+            </div>
             <div id="catEditTagsBox"><p class="text-[11px] text-slate-400 mb-1.5">Etiquetas <button type="button" onclick="closeCatEdit(); (window.navTo||switchTab)('profile'); openProfileSub('tags')" class="text-emerald-500 font-semibold ml-1">gerenciar</button></p><div id="catEditTags" class="flex flex-wrap gap-1.5"></div></div>
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" id="catEditRemember" onchange="updateCatEdit()" class="w-5 h-5 accent-emerald-500">
@@ -1582,7 +1604,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 34;
+        var APP_VERSION = 35;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1658,7 +1680,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
         const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve','subcats','tags','alertsOff'];
@@ -2090,7 +2112,7 @@
             }
         }
 
-        window.handleTransactionSubmit = e => { e.preventDefault(); window.appState.transactions.unshift({ id: 'tx_'+Date.now(), desc: document.getElementById('txDesc').value, amount: parseFloat(document.getElementById('txAmount').value), date: document.getElementById('txDate').value, account: document.getElementById('txAccount').value, category: document.getElementById('txCategory').value, type: document.getElementById('txType').value, ...pickSubTags('txSub', 'txTags') }); closeTransactionModal(); saveAndRefresh(); showToast('Transação salva!'); }
+        window.handleTransactionSubmit = e => { e.preventDefault(); window.appState.transactions.unshift({ id: 'tx_'+Date.now(), desc: document.getElementById('txDesc').value, amount: parseFloat(document.getElementById('txAmount').value), date: document.getElementById('txDate').value, account: document.getElementById('txAccount').value, category: document.getElementById('txCategory').value, type: document.getElementById('txType').value, ...pickSubTags('txSub', 'txTags') }); { const f = document.getElementById('txReceiptInput'); if (f && f.files[0]) { const novo = window.appState.transactions[0]; storeReceipt(novo.id, f.files[0]); f.value = ''; document.getElementById('txReceiptName').textContent = 'Anexar comprovante (foto)'; } } closeTransactionModal(); saveAndRefresh(); showToast('Transação salva!'); }
         window.handleAccountSubmit = e => { e.preventDefault(); window.appState.accounts.push({ id: 'acc_'+Date.now(), name: document.getElementById('accName').value, type: document.getElementById('accType').value, balance: parseFloat(document.getElementById('accBalance').value) }); closeAccountModal(); saveAndRefresh(); showToast('Conta criada!'); }
         window.handleCardSubmit = e => { e.preventDefault(); window.appState.cards.push({ id: 'card_'+Date.now(), name: document.getElementById('cardName').value, limit: parseFloat(document.getElementById('cardLimit').value), dueDay: parseInt(document.getElementById('cardDue').value) }); closeCardModal(); saveAndRefresh(); showToast('Cartão salvo!'); }
         window.handleInstallmentSubmit = e => { e.preventDefault(); const t=parseFloat(document.getElementById('instTotal').value), c=parseInt(document.getElementById('instCount').value), v=t/c; const d=new Date(document.getElementById('instDate').value+'T12:00:00'); for(let i=1;i<=c;i++){const nd=new Date(d);nd.setMonth(nd.getMonth()+(i-1));window.appState.transactions.push({id:'inst_'+Date.now()+'_'+i, desc:`${document.getElementById('instDesc').value} (${i}/${c})`, amount:v, date:nd.toISOString().split('T')[0], account:'', category:'🛍️ Outros', type:'expense'});} closeInstallmentModal(); saveAndRefresh(); showToast('Parcelas geradas!'); }
@@ -2122,7 +2144,7 @@
         window.closeCategoryModal = () => document.getElementById('categoryModal').classList.add('hidden');
         window.handleCategorySubmit = function(e) { e.preventDefault(); const o = document.getElementById('catOldName').value.trim(), n = document.getElementById('catName').value.trim(), img = document.getElementById('catImageUrl').value.trim(); if (!n) return; if (!window.appState.categoryImages) window.appState.categoryImages = {}; if (o) { const i = window.appState.categories.indexOf(o); if (i !== -1) window.appState.categories[i] = n; if (o !== n) { window.appState.transactions.forEach(t => { if (t.category === o) t.category = n; }); if (window.appState.subcats && window.appState.subcats[o]) { window.appState.subcats[n] = window.appState.subcats[o]; delete window.appState.subcats[o]; } if (window.appState.budgets[o] !== undefined) { window.appState.budgets[n] = window.appState.budgets[o]; delete window.appState.budgets[o]; } } if (img) window.appState.categoryImages[n] = img; else delete window.appState.categoryImages[n]; if (o !== n) delete window.appState.categoryImages[o]; } else { if (!window.appState.categories.includes(n)) window.appState.categories.push(n); if (img) window.appState.categoryImages[n] = img; } closeCategoryModal(); saveAndRefresh(); showToast('Categoria salva!'); }
 
-        window.deleteTransaction = id => { window.appState.transactions = window.appState.transactions.filter(t=>t.id!==id); saveAndRefresh(); }
+        window.deleteTransaction = id => { const rc = (window.appState.transactions.find(t => t.id === id) || {}).receipt; if (rc && window.dropReceiptFile) window.dropReceiptFile(rc.id); window.appState.transactions = window.appState.transactions.filter(t=>t.id!==id); saveAndRefresh(); }
         window.deleteAccount = id => { window.appState.accounts = window.appState.accounts.filter(a=>a.id!==id); saveAndRefresh(); }
         window.deleteCard = id => { window.appState.cards = window.appState.cards.filter(c=>c.id!==id); saveAndRefresh(); }
         window.deleteRecurring = id => { window.appState.recurring = window.appState.recurring.filter(r=>r.id!==id); saveAndRefresh(); }
@@ -3074,6 +3096,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <p class="sensitive text-sm font-semibold whitespace-nowrap ${isInc ? 'text-emerald-400' : 'text-white'}">${isInc ? '+' : '−'} ${formatCurrency(t.amount)}</p>
+                            ${t.receipt ? `<button type="button" onclick="event.stopPropagation(); openReceipt('${t.id}')" class="mt-1 px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-semibold"><i class="fa-solid fa-paperclip mr-0.5"></i>Comprovante</button>` : ''}
                             ${pend ? `<button type="button" onclick="event.stopPropagation(); openPayModal('${t.id}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400 text-[11px] font-semibold">Pagar</button>` : ''}
                         </div>
                         ${txSel.active ? '' : `<button type="button" onclick="event.stopPropagation(); if (confirm('Excluir este lançamento?')) deleteTransaction('${t.id}')" class="w-7 h-7 shrink-0 rounded-full text-slate-600 hover:text-rose-500 flex items-center justify-center" aria-label="Excluir"><i class="fa-solid fa-trash text-[11px]"></i></button>`}
@@ -3555,7 +3578,7 @@
             const sel = document.getElementById('catEditSelect');
             sel.innerHTML = S_().categories.map(c => `<option value="${escHTML(c)}">${escHTML(c)}</option>`).join('');
             sel.value = t.category;
-            fillSubSelect('catEditSub', t.category, t.sub); fillTagChips('catEditTags', t.tags || []);
+            fillSubSelect('catEditSub', t.category, t.sub); fillTagChips('catEditTags', t.tags || []); renderReceiptBox(t);
             document.getElementById('catEditKeyword').value = suggestRuleKeyword(t.desc);
             document.getElementById('catEditRemember').checked = true;
             document.getElementById('catEditApplyAll').checked = true;
@@ -4795,6 +4818,109 @@
         const voltar = () => { if (saiuEm && Date.now() - saiuEm > 60000 && lockCfg().on) { locked = false; window.appLockCheck(); } saiuEm = 0; };
         document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' ? marcarSaida() : voltar());
         window.onAppBackground = marcarSaida; window.onAppForeground = voltar;
+
+
+        // =====================================================================
+        // FOTO DO COMPROVANTE: a imagem é reduzida (até 1280px, JPEG) e guardada neste aparelho
+        // (IndexedDB) e na nuvem em users/{uid}/comprovantes/{id}. No lançamento fica só
+        // receipt = { id, at, cloud }, para não pesar o documento principal.
+        // =====================================================================
+        const RDB = { db: null };
+        function idb() {
+            if (RDB.db) return Promise.resolve(RDB.db);
+            return new Promise((ok, erro) => {
+                const r = indexedDB.open('cfp-comprovantes', 1);
+                r.onupgradeneeded = () => r.result.createObjectStore('fotos');
+                r.onsuccess = () => { RDB.db = r.result; ok(r.result); };
+                r.onerror = () => erro(r.error);
+            });
+        }
+        const idbOp = (modo, fn) => idb().then(d => new Promise((ok, erro) => { const tx = d.transaction('fotos', modo), q = fn(tx.objectStore('fotos')); q.onsuccess = () => ok(q.result); q.onerror = () => erro(q.error); }));
+        const idbGet = id => idbOp('readonly', st => st.get(id)).catch(() => null);
+        const idbPut = (id, v) => idbOp('readwrite', st => st.put(v, id)).catch(() => null);
+        const idbDel = id => idbOp('readwrite', st => st.delete(id)).catch(() => null);
+
+        function reduzirFoto(arquivo) {
+            return new Promise((ok, erro) => {
+                const img = new Image(), url = URL.createObjectURL(arquivo);
+                img.onload = () => {
+                    let w = img.naturalWidth, h = img.naturalHeight; const max = 1280;
+                    if (Math.max(w, h) > max) { const k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+                    const c = document.createElement('canvas'); c.width = w; c.height = h;
+                    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+                    URL.revokeObjectURL(url);
+                    let q = 0.7, data = c.toDataURL('image/jpeg', q);
+                    while (data.length > 850000 && q > 0.3) { q -= 0.1; data = c.toDataURL('image/jpeg', q); }
+                    ok(data);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); erro(new Error('imagem inválida')); };
+                img.src = url;
+            });
+        }
+        async function nuvemSalvar(id, data, txId) {
+            if (!db || !currentUser || currentUser.isAnonymous) return false;
+            try { await setDoc(doc(db, 'users', currentUser.uid, 'comprovantes', id), { img: data, txId, at: Date.now() }); return true; }
+            catch (e) { console.warn('comprovante na nuvem:', e && e.code); return false; }
+        }
+        async function nuvemLer(id) {
+            if (!db || !currentUser) return null;
+            try { const s = await getDoc(doc(db, 'users', currentUser.uid, 'comprovantes', id)); return s.exists() ? s.data().img : null; } catch (e) { return null; }
+        }
+        async function storeReceipt(txId, arquivo) {
+            const t = S_().transactions.find(x => x.id === txId); if (!t || !arquivo) return;
+            showToast('Salvando comprovante…');
+            let data; try { data = await reduzirFoto(arquivo); } catch (e) { showToast('Não consegui ler essa imagem'); return; }
+            const old = t.receipt && t.receipt.id;
+            const id = 'rc_' + Date.now();
+            await idbPut(id, data);
+            const cloud = await nuvemSalvar(id, data, txId);
+            if (old) { idbDel(old); if (db && currentUser) deleteDoc(doc(db, 'users', currentUser.uid, 'comprovantes', old)).catch(() => {}); }
+            t.receipt = { id, at: Date.now(), cloud };
+            saveAndRefresh();
+            showToast(cloud ? 'Comprovante salvo' : 'Comprovante salvo neste celular (a nuvem não aceitou: veja Configurações do Firebase)');
+            if (catEditTxId === txId) renderReceiptBox(t);
+        }
+        window.attachReceipt = function (input) { if (catEditTxId && input.files[0]) storeReceipt(catEditTxId, input.files[0]); input.value = ''; };
+        async function lerComprovante(t) {
+            if (!t || !t.receipt) return null;
+            let data = await idbGet(t.receipt.id);
+            if (!data) { data = await nuvemLer(t.receipt.id); if (data) idbPut(t.receipt.id, data); }
+            return data;
+        }
+        window.renderReceiptBox = async function (t) {
+            const box = document.getElementById('catEditReceipt'); if (!box) return;
+            const pick = `<button type="button" onclick="document.getElementById('receiptInput').click()" class="flex-1 py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-300"><i class="fa-solid fa-camera mr-1.5"></i>${t.receipt ? 'Trocar foto' : 'Anexar foto do comprovante'}</button>`;
+            if (!t.receipt) { box.innerHTML = pick; return; }
+            box.innerHTML = `<span class="w-14 h-14 rounded-xl bg-slate-800 animate-pulse"></span>${pick}`;
+            const data = await lerComprovante(t);
+            box.innerHTML = (data ? `<button type="button" onclick="openReceipt('${t.id}')" class="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0"><img src="${data}" alt="Comprovante" class="w-full h-full object-cover"></button>`
+                : `<span class="w-14 h-14 rounded-xl bg-slate-800 flex items-center justify-center text-[10px] text-slate-500 text-center shrink-0">foto em outro aparelho</span>`) + pick;
+        };
+        let viewTx = null;
+        window.openReceipt = async function (txId) {
+            const t = S_().transactions.find(x => x.id === txId); if (!t || !t.receipt) return;
+            viewTx = txId;
+            const img = document.getElementById('receiptViewerImg'); img.removeAttribute('src');
+            document.getElementById('receiptViewerTitle').textContent = `${t.desc} · ${formatCurrency(t.amount)}`;
+            document.getElementById('receiptViewerInfo').textContent = `${fmtDateBR(t.date)} · ${t.receipt.cloud ? 'salvo na nuvem' : 'salvo só neste aparelho'}`;
+            document.getElementById('receiptViewer').classList.remove('hidden');
+            const data = await lerComprovante(t);
+            if (data) img.src = data; else document.getElementById('receiptViewerInfo').textContent = 'A foto está em outro aparelho e não foi para a nuvem.';
+        };
+        window.closeReceipt = () => { document.getElementById('receiptViewer').classList.add('hidden'); viewTx = null; };
+        window.saveReceipt = function () {
+            const src = document.getElementById('receiptViewerImg').src; if (!src || !src.startsWith('data:')) return;
+            const t = S_().transactions.find(x => x.id === viewTx), nome = `comprovante-${(t && t.date) || ''}.jpg`;
+            if (window.AndroidApp && AndroidApp.saveFile) { AndroidApp.saveFile(nome, 'image/jpeg', src.split(',')[1]); return; }
+            const a = document.createElement('a'); a.href = src; a.download = nome; a.click();
+        };
+        window.dropReceiptFile = id => { idbDel(id); if (db && currentUser) deleteDoc(doc(db, 'users', currentUser.uid, 'comprovantes', id)).catch(() => {}); };
+        window.removeReceipt = function () {
+            const t = S_().transactions.find(x => x.id === viewTx); if (!t || !t.receipt || !confirm('Remover a foto do comprovante?')) return;
+            const id = t.receipt.id; delete t.receipt;
+            idbDel(id); if (db && currentUser) deleteDoc(doc(db, 'users', currentUser.uid, 'comprovantes', id)).catch(() => {});
+            closeReceipt(); saveAndRefresh(); if (catEditTxId === t.id) renderReceiptBox(t); showToast('Comprovante removido');
+        };
 
         function renderSmartFeatures() {
             ensureSmartState();

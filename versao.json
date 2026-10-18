@@ -1,4 +1,4 @@
 {
-  "versao": 34,
-  "notas": "Novo: bloqueio do app com PIN (e digital no app Android). Ative em Perfil > Configurações > Segurança."
+  "versao": 35,
+  "notas": "Novo: foto do comprovante. Anexe a foto ao lançar ou tocando na categoria de um lançamento no extrato."
 }
