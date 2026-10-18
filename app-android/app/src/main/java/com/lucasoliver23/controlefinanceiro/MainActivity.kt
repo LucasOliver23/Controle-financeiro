@@ -27,7 +27,10 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
@@ -56,8 +59,9 @@ import java.io.File
  *  - login com Google (o Google bloqueia login dentro de WebView): Credential Manager nativo
  *  - salvar e compartilhar arquivos (CSV, resumo do mês)
  *  - lembretes de vencimento como notificação no celular (Lembretes.kt)
+ *  - desbloqueio do app com a digital (BiometricPrompt)
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     companion object {
         private const val SITE = "https://controlo-financeiro-pro-3.vercel.app/"
@@ -127,6 +131,10 @@ class MainActivity : ComponentActivity() {
 
         if (savedInstanceState != null) web.restoreState(savedInstanceState) else web.loadUrl(SITE)
     }
+
+    // Avisa o site quando o app sai/volta da tela (para pedir o PIN de novo depois de 1 minuto)
+    override fun onStop() { super.onStop(); if (::web.isInitialized) js("window.onAppBackground && window.onAppBackground()") }
+    override fun onStart() { super.onStart(); if (::web.isInitialized) js("window.onAppForeground && window.onAppForeground()") }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -256,6 +264,13 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
+        fun biometricAvailable(): Boolean =
+            BiometricManager.from(this@MainActivity).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
+
+        @JavascriptInterface
+        fun biometricAuth() = runOnUiThread { pedirDigital() }
+
+        @JavascriptInterface
         fun notificationsAllowed(): Boolean = Lembretes.podeNotificar(this@MainActivity)
 
         @JavascriptInterface
@@ -284,6 +299,24 @@ class MainActivity : ComponentActivity() {
                 erroLogin(e.message ?: e.javaClass.simpleName)
             }
         }
+    }
+
+    private fun pedirDigital() {
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                js("window.onBiometricResult && window.onBiometricResult(true)")
+            }
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                js("window.onBiometricResult && window.onBiometricResult(false)")
+            }
+        })
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Controle Financeiro")
+            .setSubtitle("Use a digital para abrir")
+            .setNegativeButtonText("Usar PIN")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+            .build()
+        try { prompt.authenticate(info) } catch (e: Exception) { js("window.onBiometricResult && window.onBiometricResult(false)") }
     }
 
     private fun erroLogin(msg: String) =

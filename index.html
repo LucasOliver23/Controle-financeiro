@@ -214,6 +214,18 @@
 <body class="text-slate-900 dark:text-slate-100 min-h-screen overflow-x-hidden transition-colors duration-300">
     <div id="appSplash" style="position:fixed;inset:0;z-index:80;background:#000;display:flex;align-items:center;justify-content:center"><img src="icon-192.png" alt="" style="width:72px;height:72px;border-radius:18px"></div>
     <script>setTimeout(function () { var s = document.getElementById('appSplash'); if (s) s.remove(); }, 6000);</script>
+    <!-- ===================== TELA DE BLOQUEIO (PIN / digital) ===================== -->
+    <div id="lockScreen" class="hidden fixed inset-0 z-[95] bg-black text-white flex flex-col items-center justify-center px-6" style="padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)">
+        <img src="icon-192.png" alt="" class="w-16 h-16 rounded-2xl mb-4">
+        <p class="text-lg font-bold">Controle Financeiro</p>
+        <p id="lockMsg" class="text-sm text-slate-400 mt-1 mb-6">Digite seu PIN</p>
+        <div id="lockDots" class="flex gap-4 mb-8"></div>
+        <div class="grid grid-cols-3 gap-4 w-full max-w-[280px]" id="lockPad"></div>
+        <div class="flex items-center justify-between w-full max-w-[280px] mt-6 text-sm">
+            <button type="button" id="lockBioBtn" onclick="lockBiometric()" class="hidden text-emerald-400 font-semibold flex items-center gap-2"><i class="fa-solid fa-fingerprint text-lg"></i>Usar digital</button>
+            <button type="button" onclick="forgotPin()" class="ml-auto text-slate-400">Esqueci o PIN</button>
+        </div>
+    </div>
 
     <!--
         STUBS DE COMPATIBILIDADE — a Sidebar foi removida, mas o <script> original
@@ -869,7 +881,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">33</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">34</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -920,6 +932,17 @@
                         </div>
                     </div>
                     <div>
+                        <h3 class="set-title">Segurança</h3>
+                        <div class="set-group">
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-lock"></i></span><span class="set-label">Bloquear o app com PIN</span>
+                                <button type="button" role="switch" id="settingsLockSwitch" onclick="toggleAppLock()" class="set-switch" aria-label="Bloquear o app com PIN"></button></div>
+                            <div id="settingsBioRow" class="set-row cursor-default hidden"><span class="set-icon" style="--c:#8b5cf6"><i class="fa-solid fa-fingerprint"></i></span><span class="set-label">Desbloquear com a digital</span>
+                                <button type="button" role="switch" id="settingsBioSwitch" onclick="toggleBioLock()" class="set-switch" aria-label="Desbloquear com a digital"></button></div>
+                            <button type="button" id="settingsChangePin" onclick="changePin()" class="set-row hidden"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-key"></i></span><span class="set-label">Trocar PIN</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
+                        </div>
+                        <p id="settingsLockStatus" class="text-[11px] text-slate-400 px-4 mt-2"></p>
+                    </div>
+                    <div>
                         <h3 class="set-title">Lembretes de vencimento</h3>
                         <div class="set-group">
                             <div class="set-row cursor-default"><span class="set-icon" style="--c:#f59e0b"><i class="fa-regular fa-bell"></i></span><span class="set-label">Avisar vencimentos</span>
@@ -944,7 +967,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">33</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">34</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1559,7 +1582,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 33;
+        var APP_VERSION = 34;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1651,7 +1674,7 @@
             onAuthStateChanged(auth, (user) => {
                 currentUser = user; updateAuthUI(user);
                 const splash = document.getElementById('appSplash'); if (splash) splash.remove();
-                if (user && !user.isAnonymous) { window.closeAuthModal(); if (syncedUid !== user.uid) pullFromCloud(user); }
+                if (user && !user.isAnonymous) { window.closeAuthModal(); if (syncedUid !== user.uid) pullFromCloud(user); if (window.appLockCheck) window.appLockCheck(); }
                 else { cloudReady = false; syncedUid = null; window.showLoginGate(); }
             });
             // Conclui o login do Google quando ele volta por redirecionamento
@@ -1967,6 +1990,12 @@
         window.closeGoalModal = () => document.getElementById('goalModal').classList.add('hidden');
         
         let authMode = 'login';
+        window.forgotPin = function() {
+            if (!confirm('Esqueceu o PIN?\n\nO app vai sair da sua conta e desligar o bloqueio neste celular. Seus dados continuam salvos na nuvem: é só entrar de novo com seu e-mail ou Google.')) return;
+            try { localStorage.removeItem('cfp_lock'); } catch (e) {}
+            clearTimeout(pushTimer);
+            pushToCloud().finally(() => signOut(auth).then(() => { if (window.AndroidApp && AndroidApp.googleSignOut) AndroidApp.googleSignOut(); SYNC_KEYS.forEach(k => localStorage.removeItem(`df_${k}`)); ['df_owner_uid','df_updated_at'].forEach(k => localStorage.removeItem(k)); window.location.reload(); }));
+        };
         window.openAuthModal = function() {
             if (window.innerWidth < 768) closeMobileSidebar();
             if (currentUser && !currentUser.isAnonymous) {
@@ -4682,6 +4711,91 @@
             filterTransactions();
         };
 
+
+        // =====================================================================
+        // BLOQUEIO DO APP: PIN de 4 dígitos (guardado só neste aparelho, como hash) e, no app
+        // Android, digital. Bloqueia ao abrir e ao voltar depois de 1 minuto fora do app.
+        // =====================================================================
+        const LOCK_KEY = 'cfp_lock';
+        const lockCfg = () => { try { return JSON.parse(localStorage.getItem(LOCK_KEY)) || {}; } catch (e) { return {}; } };
+        const lockSave = c => { try { localStorage.setItem(LOCK_KEY, JSON.stringify(c)); } catch (e) {} };
+        const bioDisponivel = () => !!(window.AndroidApp && typeof AndroidApp.biometricAvailable === 'function' && AndroidApp.biometricAvailable());
+        async function pinHash(pin, salt) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:${pin}`));
+            return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        let lockMode = null, lockBuf = '', lockFirst = '', locked = false, saiuEm = 0, erros = 0;
+        function lockRender() {
+            document.getElementById('lockDots').innerHTML = [0, 1, 2, 3].map(i => `<span class="w-3.5 h-3.5 rounded-full ${i < lockBuf.length ? 'bg-emerald-400' : 'border-2 border-slate-600'}"></span>`).join('');
+        }
+        function lockShow(mode, msg) {
+            lockMode = mode; lockBuf = '';
+            document.getElementById('lockMsg').textContent = msg;
+            document.getElementById('lockMsg').className = 'text-sm text-slate-400 mt-1 mb-6';
+            const k = ['1', '2', '3', '4', '5', '6', '7', '8', '9', mode === 'unlock' ? '' : 'x', '0', '⌫'];
+            document.getElementById('lockPad').innerHTML = k.map(d => d === '' ? '<span></span>' : `<button type="button" onclick="lockKey('${d}')" class="h-16 rounded-full ${d === 'x' || d === '⌫' ? 'text-slate-400 text-lg' : 'bg-white/[0.08] text-2xl font-semibold active:bg-white/20'}">${d === 'x' ? 'Cancelar' : d === '⌫' ? '<i class="fa-solid fa-delete-left"></i>' : d}</button>`).join('');
+            const cfg = lockCfg();
+            document.getElementById('lockBioBtn').classList.toggle('hidden', !(mode === 'unlock' && cfg.bio && bioDisponivel()));
+            document.querySelector('#lockScreen button[onclick="forgotPin()"]').classList.toggle('hidden', mode !== 'unlock');
+            lockRender();
+            document.getElementById('lockScreen').classList.remove('hidden');
+        }
+        function lockHide() { document.getElementById('lockScreen').classList.add('hidden'); lockMode = null; lockBuf = ''; }
+        function lockErro(msg) {
+            const el = document.getElementById('lockMsg'); el.textContent = msg; el.className = 'text-sm text-rose-400 mt-1 mb-6';
+            const d = document.getElementById('lockDots'); d.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'translateX(0)' }], { duration: 250 });
+            lockBuf = ''; lockRender();
+        }
+        window.lockKey = async function (d) {
+            if (d === 'x') { lockHide(); renderLockSettings(); return; }
+            if (d === '⌫') { lockBuf = lockBuf.slice(0, -1); lockRender(); return; }
+            if (lockBuf.length >= 4) return;
+            lockBuf += d; lockRender();
+            if (lockBuf.length < 4) return;
+            const pin = lockBuf, cfg = lockCfg();
+            await new Promise(r => setTimeout(r, 120));
+            if (lockMode === 'unlock') {
+                if (await pinHash(pin, cfg.salt) === cfg.hash) { erros = 0; locked = false; lockHide(); }
+                else { erros++; lockErro(erros >= 5 ? 'PIN errado. Toque em "Esqueci o PIN" se não lembrar.' : 'PIN errado, tente de novo'); }
+            } else if (lockMode === 'new') {
+                lockFirst = pin; lockShow('confirm', 'Repita o PIN para confirmar');
+            } else if (lockMode === 'confirm') {
+                if (pin !== lockFirst) { lockShow('new', 'Os PINs não batem. Crie de novo'); return; }
+                const salt = crypto.getRandomValues(new Uint32Array(2)).join('-');
+                lockSave({ on: true, salt, hash: await pinHash(pin, salt), bio: bioDisponivel() });
+                lockHide(); renderLockSettings(); showToast(bioDisponivel() ? 'Bloqueio ligado: PIN e digital' : 'Bloqueio com PIN ligado');
+            }
+        };
+        window.lockBiometric = function () { if (bioDisponivel()) AndroidApp.biometricAuth(); };
+        window.onBiometricResult = function (ok) { if (ok && lockMode === 'unlock') { erros = 0; locked = false; lockHide(); } };
+        window.appLockCheck = function () {
+            const cfg = lockCfg(); if (!cfg.on || !cfg.hash || locked) return;
+            locked = true; lockShow('unlock', 'Digite seu PIN');
+            if (cfg.bio && bioDisponivel()) setTimeout(() => AndroidApp.biometricAuth(), 300);
+        };
+        window.toggleAppLock = function () {
+            const cfg = lockCfg();
+            if (cfg.on) { if (confirm('Desligar o bloqueio do app neste celular?')) { lockSave({}); renderLockSettings(); showToast('Bloqueio desligado'); } return; }
+            lockShow('new', 'Crie um PIN de 4 números');
+        };
+        window.changePin = function () { lockShow('new', 'Digite o novo PIN'); };
+        window.toggleBioLock = function () { const cfg = lockCfg(); cfg.bio = !cfg.bio; lockSave(cfg); renderLockSettings(); };
+        function renderLockSettings() {
+            const cfg = lockCfg(), bio = bioDisponivel();
+            const sw = document.getElementById('settingsLockSwitch'); if (!sw) return;
+            sw.setAttribute('aria-checked', String(!!cfg.on));
+            document.getElementById('settingsBioRow').classList.toggle('hidden', !(cfg.on && bio));
+            document.getElementById('settingsBioSwitch').setAttribute('aria-checked', String(!!cfg.bio));
+            document.getElementById('settingsChangePin').classList.toggle('hidden', !cfg.on);
+            document.getElementById('settingsLockStatus').textContent = !cfg.on ? 'Pede o PIN ao abrir o app e ao voltar depois de 1 minuto fora. Vale só para este aparelho.'
+                : `Bloqueio ligado neste aparelho${cfg.bio && bio ? ' · digital ativada' : ''}.${!bio && window.AndroidApp ? ' Para usar a digital, instale a versão nova do app (Releases no GitHub).' : ''}`;
+        }
+        // Saiu do app por mais de 1 minuto: bloqueia de novo ao voltar
+        const marcarSaida = () => { saiuEm = Date.now(); };
+        const voltar = () => { if (saiuEm && Date.now() - saiuEm > 60000 && lockCfg().on) { locked = false; window.appLockCheck(); } saiuEm = 0; };
+        document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' ? marcarSaida() : voltar());
+        window.onAppBackground = marcarSaida; window.onAppForeground = voltar;
+
         function renderSmartFeatures() {
             ensureSmartState();
             try { renderSafeToSpend(); } catch (e) { console.warn('safe-to-spend', e); }
@@ -4691,6 +4805,7 @@
             try { renderBills(); } catch (e) { console.warn('vencimentos', e); }
             try { renderReserve(); } catch (e) { console.warn('reserva', e); }
             try { renderSpendAlerts(); } catch (e) { console.warn('alertas', e); }
+            try { renderLockSettings(); } catch (e) { console.warn('bloqueio', e); }
         }
 
         window.isFirstLoad = true;
