@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.speech.RecognizerIntent
 import android.util.Base64
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -81,6 +82,13 @@ class MainActivity : FragmentActivity() {
     // Android 13+: pede permissão para mostrar as notificações dos lembretes
     private val pedirNotificacao =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    // Lançar por voz: reconhecimento de fala do Google em português
+    private val ouvirVoz =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+            val texto = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull() ?: ""
+            js("window.onVoiceResult && window.onVoiceResult(${JSONObject.quote(texto)})")
+        }
 
     private val escolherArquivo =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -292,6 +300,16 @@ class MainActivity : FragmentActivity() {
 
         @JavascriptInterface
         fun biometricAuth() = runOnUiThread { pedirDigital() }
+
+        @JavascriptInterface
+        fun startVoice() = runOnUiThread {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pt-BR")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "Ex.: gastei 45 reais no mercado")
+            }
+            try { ouvirVoz.launch(intent) } catch (e: Exception) { js("window.onVoiceResult && window.onVoiceResult('')") }
+        }
 
         @JavascriptInterface
         fun notificationsAllowed(): Boolean = Lembretes.podeNotificar(this@MainActivity)

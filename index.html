@@ -902,7 +902,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">37</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">38</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -1004,7 +1004,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">37</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">38</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1077,6 +1077,15 @@
                     <span class="qa-ico"><i class="fa-solid fa-right-left"></i></span>
                     <span><span class="block text-sm font-bold">Transferência</span><span class="block text-[11px] text-slate-400 mt-0.5">Entre suas contas, não conta como gasto</span></span>
                 </button>
+                <button type="button" onclick="closeQuickAdd(); startVoiceEntry()" class="qa-tile" style="--c:#f59e0b">
+                    <span class="qa-ico"><i class="fa-solid fa-microphone"></i></span>
+                    <span><span class="block text-sm font-bold">Por voz</span><span class="block text-[11px] text-slate-400 mt-0.5">"Gastei 50 no mercado"</span></span>
+                </button>
+                <label onclick="closeQuickAdd()" class="qa-tile cursor-pointer" style="--c:#ec4899">
+                    <span class="qa-ico"><i class="fa-solid fa-receipt"></i></span>
+                    <span><span class="block text-sm font-bold">Foto da nota</span><span class="block text-[11px] text-slate-400 mt-0.5">Lê o total e a data</span></span>
+                    <input type="file" id="noteScanInput" accept="image/*" onchange="scanNotePhoto(this)" class="hidden">
+                </label>
                 <label onclick="closeQuickAdd()" class="qa-tile col-span-2 cursor-pointer" style="--c:#38bdf8">
                     <span class="qa-ico"><i class="fa-solid fa-file-import"></i></span>
                     <span><span class="block text-sm font-bold">Importar extrato</span><span class="block text-[11px] text-slate-400 mt-0.5">OFX, CSV ou PDF do banco</span></span>
@@ -1130,6 +1139,17 @@
             <input id="oweAmount" type="number" step="0.01" min="0.01" required placeholder="Valor (R$)" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white">
             <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Salvar</button>
         </form>
+    </div>
+
+    <div id="voiceModal" class="hidden fixed inset-0 z-[70] bg-black/95 flex flex-col items-center justify-center px-6 text-center" role="dialog" aria-modal="true" aria-label="Lançar por voz">
+        <button type="button" id="voiceMicBtn" onclick="voiceRetry()" class="w-24 h-24 rounded-full bg-amber-400 text-black text-4xl flex items-center justify-center shadow-[0_0_0_12px_rgba(251,191,36,.15)]"><i class="fa-solid fa-microphone"></i></button>
+        <p id="voiceStatus" class="text-white text-lg font-semibold mt-6">Pode falar…</p>
+        <p class="text-slate-400 text-sm mt-2">Ex.: "gastei 45 reais no mercado", "paguei 120 de luz ontem", "recebi 300 do João"</p>
+        <form onsubmit="event.preventDefault(); applyVoiceText(document.getElementById('voiceTyped').value)" class="w-full max-w-sm mt-8 flex gap-2">
+            <input id="voiceTyped" placeholder="…ou escreva aqui" class="flex-1 min-w-0 px-4 py-3 rounded-full bg-white/10 text-white text-sm">
+            <button type="submit" class="px-4 rounded-full bg-emerald-500 text-black text-sm font-bold">OK</button>
+        </form>
+        <button type="button" onclick="closeVoice()" class="mt-6 text-slate-400 text-sm">Cancelar</button>
     </div>
 
     <div id="reserveModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
@@ -1194,6 +1214,7 @@
                 <h3 id="modalTitle" class="font-bold text-lg">Transação</h3>
                 <button onclick="closeTransactionModal()" class="text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg p-1 w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <p id="txAutoHint" class="hidden text-[12px] rounded-xl bg-amber-400/10 text-amber-300 px-3 py-2"></p>
             <form onsubmit="handleTransactionSubmit(event)" class="space-y-4">
                 <input type="hidden" id="txId">
                 <input type="text" id="txDesc" required placeholder="Descrição" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400">
@@ -1670,7 +1691,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 37;
+        var APP_VERSION = 38;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -2012,7 +2033,7 @@
         }
 
         window.openTransactionModal = (t='expense') => { document.getElementById('transactionModal').classList.remove('hidden'); document.getElementById('txDate').valueAsDate = new Date(); document.getElementById('txType').value = t; document.getElementById('modalTitle').textContent = t === 'income' ? 'Nova Receita' : 'Nova Despesa'; populateSelects(); fillSubSelect('txSub', document.getElementById('txCategory').value); fillTagChips('txTags', []); }
-        window.closeTransactionModal = () => document.getElementById('transactionModal').classList.add('hidden');
+        window.closeTransactionModal = () => { document.getElementById('transactionModal').classList.add('hidden'); const h = document.getElementById('txAutoHint'); if (h) h.classList.add('hidden'); };
         window.openAccountModal = () => document.getElementById('accountModal').classList.remove('hidden');
         window.closeAccountModal = () => document.getElementById('accountModal').classList.add('hidden');
         window.openCardModal = () => document.getElementById('cardModal').classList.remove('hidden');
@@ -5175,6 +5196,104 @@
                     ${x.txId ? '' : `<button type="button" onclick="splitDelete('${x.id}')" class="w-7 h-7 text-slate-500" aria-label="Excluir"><i class="fa-solid fa-trash text-[11px]"></i></button>`}
                 </div>`).join('')}</div>
             </div>`).join('') : `<div class="rpt-card text-center"><p class="text-sm font-semibold">Nada dividido ainda</p><p class="text-xs text-slate-400 mt-1">No extrato, toque na categoria de um gasto e em <b>Dividir este gasto</b>.</p></div>`;
+        };
+
+
+        // =====================================================================
+        // LANÇAR POR VOZ E PELA FOTO DA NOTA: entendem a frase / o texto da nota e abrem o
+        // "Novo lançamento" já preenchido para conferir e salvar (nada é salvo sozinho).
+        // =====================================================================
+        const NUM_EXT = { um: 1, uma: 1, dois: 2, duas: 2, 'três': 3, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11, doze: 12, quinze: 15, vinte: 20, trinta: 30, quarenta: 40, cinquenta: 50, sessenta: 60, setenta: 70, oitenta: 80, noventa: 90, cem: 100, cento: 100, duzentos: 200, trezentos: 300, quinhentos: 500, mil: 1000 };
+        function parseFrase(frase) {
+            let f = ' ' + String(frase || '').toLowerCase().replace(/r\$\s*/g, ' ').replace(/[.!?]+$/, '').replace(/\s+/g, ' ') + ' ';
+            const tipo = /\s(recebi|ganhei|entrou|caiu|me pagou|me pagaram|me mandou|me transferiu|sal[aá]rio)\s/.test(f) ? 'income' : 'expense';
+            // Data (tira da frase antes de procurar o valor, para "dia 12" não virar R$ 12)
+            const hoje = new Date(); let data = new Date(hoje);
+            if (/\santeontem\s/.test(f)) data.setDate(hoje.getDate() - 2); else if (/\sontem\s/.test(f)) data.setDate(hoje.getDate() - 1);
+            const dm = f.match(/\sdia (\d{1,2})\s/);
+            if (dm) { data = new Date(hoje.getFullYear(), hoje.getMonth(), Number(dm[1])); if (data > hoje) data.setMonth(data.getMonth() - 1); f = f.replace(dm[0], ' '); }
+            f = f.replace(/\s(hoje|ontem|anteontem)\s/g, ' ');
+            // Valor: "45", "45,90", "45 e 90", "1.200", "cinquenta reais"
+            let valor = 0;
+            const vm = f.match(/(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{1,2})|\.(\d{2})(?!\d)| e (\d{1,2})(?: centavos?)?| reais e (\d{1,2}))?/);
+            if (vm) { const c = vm[2] || vm[3] || vm[4] || vm[5] || ''; valor = Number(vm[1].replace(/\./g, '')) + (c ? Number(c) / (c.length === 1 && vm[2] ? 10 : 100) : 0); f = f.replace(vm[0], ' '); }
+            // Palavras (separadas por espaço: \b não funciona com acentos)
+            const PARAR = new Set(['gastei', 'paguei', 'comprei', 'recebi', 'ganhei', 'entrou', 'caiu', 'me', 'pagou', 'pagaram', 'mandou', 'transferiu', 'foi', 'deu', 'custou', 'reais', 'real', 'centavo', 'centavos', 'com', 'no', 'na', 'nos', 'nas', 'de', 'do', 'da', 'dos', 'das', 'em', 'um', 'uma', 'o', 'a', 'os', 'as', 'pra', 'para', 'pro', 'e', 'por']);
+            const palavras = f.split(' ').filter(Boolean);
+            if (!vm) { let soma = 0, achou = false; palavras.forEach(w => { if (NUM_EXT[w] != null) { achou = true; soma = NUM_EXT[w] === 1000 ? Math.max(1, soma) * 1000 : soma + NUM_EXT[w]; } }); if (achou) valor = soma; }
+            let desc = palavras.filter(w => !PARAR.has(w) && NUM_EXT[w] == null).join(' ').trim();
+            desc = desc ? desc.charAt(0).toUpperCase() + desc.slice(1) : (tipo === 'income' ? 'Recebimento' : 'Gasto');
+            return { tipo, valor: Math.round(valor * 100) / 100, data: isoDate(data), desc };
+        }
+        function abrirPreenchido(d, aviso) {
+            openTransactionModal(d.tipo);
+            document.getElementById('txDesc').value = d.desc || '';
+            document.getElementById('txAmount').value = d.valor ? d.valor.toFixed(2) : '';
+            document.getElementById('txDate').value = d.data || isoDate(new Date());
+            const cat = guessCategory(d.desc || '', d.tipo), sel = document.getElementById('txCategory');
+            if ([...sel.options].some(o => o.value === cat)) { sel.value = cat; fillSubSelect('txSub', cat); }
+            const h = document.getElementById('txAutoHint'); h.innerHTML = aviso; h.classList.remove('hidden');
+            if (!d.valor) setTimeout(() => document.getElementById('txAmount').focus(), 100);
+        }
+        // ---------- Voz ----------
+        let reconhecedor = null;
+        window.startVoiceEntry = function () {
+            document.getElementById('voiceTyped').value = '';
+            document.getElementById('voiceModal').classList.remove('hidden');
+            voiceRetry();
+        };
+        window.voiceRetry = function () {
+            const st = document.getElementById('voiceStatus');
+            if (window.AndroidApp && typeof AndroidApp.startVoice === 'function') { st.textContent = 'Pode falar…'; AndroidApp.startVoice(); return; }
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { st.textContent = 'Este aparelho não reconhece voz aqui. Escreva a frase abaixo.'; document.getElementById('voiceTyped').focus(); return; }
+            try { if (reconhecedor) reconhecedor.abort(); } catch (e) {}
+            reconhecedor = new SR(); reconhecedor.lang = 'pt-BR'; reconhecedor.interimResults = true; reconhecedor.maxAlternatives = 1;
+            reconhecedor.onresult = ev => { const r = ev.results[ev.results.length - 1]; st.textContent = `"${r[0].transcript}"`; if (r.isFinal) applyVoiceText(r[0].transcript); };
+            reconhecedor.onerror = ev => { st.textContent = ev.error === 'not-allowed' ? 'Sem permissão para o microfone. Escreva a frase abaixo.' : 'Não entendi. Toque no microfone e tente de novo.'; };
+            st.textContent = 'Pode falar…'; reconhecedor.start();
+        };
+        window.onVoiceResult = function (texto) { if (texto) applyVoiceText(texto); else document.getElementById('voiceStatus').textContent = 'Não entendi. Toque no microfone e tente de novo.'; };
+        window.closeVoice = function () { try { reconhecedor && reconhecedor.abort(); } catch (e) {} document.getElementById('voiceModal').classList.add('hidden'); };
+        window.applyVoiceText = function (texto) {
+            if (!String(texto || '').trim()) return;
+            closeVoice();
+            const d = parseFrase(texto);
+            abrirPreenchido(d, `<i class="fa-solid fa-microphone mr-1"></i>Entendi: "${escHTML(texto)}". Confira e salve.`);
+        };
+        // ---------- Foto da nota (leitura do texto com Tesseract, carregado só quando usar) ----------
+        function carregarOcr() {
+            if (window.Tesseract) return Promise.resolve(window.Tesseract);
+            return new Promise((ok, erro) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; sc.onload = () => ok(window.Tesseract); sc.onerror = () => erro(new Error('sem internet')); document.head.appendChild(sc); });
+        }
+        function lerNota(texto) {
+            const linhas = String(texto || '').split(/\n+/).map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+            const num = v => Number(String(v).replace(/\s/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
+            const valorNa = l => { const m = l.match(/(\d{1,3}(?:[.\s]\d{3})*,\d{2}|\d+[.,]\d{2})(?!.*\d[.,]\d{2})/); return m ? num(m[1]) : 0; };
+            // Total: linha com TOTAL / VALOR A PAGAR / VALOR PAGO (a última que tiver valor)
+            let total = 0;
+            linhas.forEach(l => { if (/\b(total|valor\s*a\s*pagar|valor\s*pago|vl\.?\s*total|total\s*r\$)\b/i.test(l) && !/sub\s*-?total|qtd|tribut|imposto/i.test(l)) { const v = valorNa(l); if (v) total = v; } });
+            if (!total) { const vs = linhas.map(valorNa).filter(Boolean); total = vs.length ? Math.max(...vs) : 0; }
+            const dm = String(texto).match(/\b(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})\b/);
+            let data = isoDate(new Date());
+            if (dm) { const y = dm[3].length === 2 ? '20' + dm[3] : dm[3]; const cand = `${y}-${dm[2]}-${dm[1]}`; if (!isNaN(new Date(cand + 'T12:00:00')) && cand <= isoDate(new Date())) data = cand; }
+            const loja = (linhas.find(l => /[a-zà-ú]{3,}/i.test(l) && !/cnpj|cpf|cupom|nota|fiscal|documento|auxiliar|danfe|nfc|sat|extrato|data|hora|\d{2}\/\d{2}/i.test(l)) || 'Compra').slice(0, 50);
+            const nomeBonito = loja.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(Ltda|Me|Eireli|S\.?a\.?)\b\.?/gi, '').trim();
+            return { tipo: 'expense', valor: Math.round(total * 100) / 100, data, desc: nomeBonito || 'Compra' };
+        }
+        window.scanNotePhoto = async function (input) {
+            const arq = input.files[0]; input.value = ''; if (!arq) return;
+            showToast('Lendo a nota… (pode levar alguns segundos)');
+            let T; try { T = await carregarOcr(); } catch (e) { showToast('Precisa de internet para ler a nota'); return; }
+            try {
+                const foto = await reduzirFoto(arq);   // mesma redução do comprovante (até 1280px)
+                const r = await T.recognize(foto, 'por');
+                const d = lerNota(r.data.text);
+                abrirPreenchido(d, `<i class="fa-solid fa-receipt mr-1"></i>Li a nota: ${d.valor ? `total <b>${formatCurrency(d.valor)}</b>` : 'não achei o total'}, ${fmtDateBR(d.data)}. Confira antes de salvar — a foto vai junto como comprovante.`);
+                // Anexa a foto da nota como comprovante do lançamento
+                const dt = new DataTransfer(); dt.items.add(arq); const ri = document.getElementById('txReceiptInput');
+                if (ri) { ri.files = dt.files; document.getElementById('txReceiptName').textContent = '📎 Foto da nota'; }
+            } catch (e) { console.warn('ocr', e); showToast('Não consegui ler a nota. Tente uma foto mais nítida e reta.'); }
         };
 
         function renderSmartFeatures() {
