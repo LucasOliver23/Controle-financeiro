@@ -76,6 +76,7 @@ class MainActivity : FragmentActivity() {
 
     private lateinit var web: WebView
     private var arquivoCallback: ValueCallback<Array<Uri>>? = null
+    private var fotoCamera: Uri? = null
 
     // Android 13+: pede permissão para mostrar as notificações dos lembretes
     private val pedirNotificacao =
@@ -83,8 +84,13 @@ class MainActivity : FragmentActivity() {
 
     private val escolherArquivo =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-            arquivoCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(r.resultCode, r.data))
+            var resultado = WebChromeClient.FileChooserParams.parseResult(r.resultCode, r.data)
+            // Foto tirada pela câmera: o app de câmera grava no arquivo que passamos e não devolve dados
+            val foto = fotoCamera
+            if (resultado == null && r.resultCode == RESULT_OK && foto != null) resultado = arrayOf(foto)
+            arquivoCallback?.onReceiveValue(resultado)
             arquivoCallback = null
+            fotoCamera = null
         }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -222,8 +228,25 @@ class MainActivity : FragmentActivity() {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = if (soImagem) "image/*" else "*/*"
             }
+            val escolha = Intent.createChooser(intent, if (soImagem) "Foto do comprovante" else "Escolher arquivo")
+            // Para imagens (comprovante, foto do perfil) também oferece tirar a foto na hora
+            if (soImagem) {
+                try {
+                    val pasta = File(cacheDir, "compartilhar").apply { mkdirs() }
+                    val arquivo = File(pasta, "foto_${System.currentTimeMillis()}.jpg")
+                    val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.arquivos", arquivo)
+                    val camera = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                        putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    if (camera.resolveActivity(packageManager) != null) {
+                        fotoCamera = uri
+                        escolha.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(camera))
+                    }
+                } catch (e: Exception) { fotoCamera = null }
+            }
             return try {
-                escolherArquivo.launch(Intent.createChooser(intent, "Escolher arquivo"))
+                escolherArquivo.launch(escolha)
                 true
             } catch (e: Exception) {
                 arquivoCallback = null
