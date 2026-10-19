@@ -1,4 +1,4 @@
 {
-  "versao": 32,
-  "notas": "Novo: calendário financeiro em Relatórios. Veja dia a dia o que entrou, o que saiu e o que vence."
+  "versao": 33,
+  "notas": "Novo: alertas de gasto fora do normal no Início, comparando com a sua média dos últimos meses."
 }

@@ -358,6 +358,8 @@
                 </button>
 
                 <!-- ============ QUANTO POSSO GASTAR HOJE ============ -->
+ <!-- ============ ALERTAS DE GASTO FORA DO NORMAL ============ -->
+                <section id="alertsCard" class="hidden bg-white dark:bg-slate-900 rounded-3xl border border-amber-400/30 p-5"></section>
                 <section id="safeSpendCard" class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5"></section>
                 <section class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/70 dark:border-white/[0.07] p-5">
                     <header class="flex items-center justify-between mb-1">
@@ -867,7 +869,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">32</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">33</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -942,7 +944,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">32</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">33</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1557,7 +1559,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 32;
+        var APP_VERSION = 33;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1636,7 +1638,7 @@
         import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve','subcats','tags'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve','subcats','tags','alertsOff'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1679,6 +1681,7 @@
             reserve: JSON.parse(localStorage.getItem('df_reserve')) || { months: 6, sources: [], extra: 0, cost: 0 },
             subcats: JSON.parse(localStorage.getItem('df_subcats')) || {},
             tags: JSON.parse(localStorage.getItem('df_tags')) || [],
+            alertsOff: JSON.parse(localStorage.getItem('df_alertsOff')) || {},
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -3488,6 +3491,7 @@
             if (!Array.isArray(S.reserve.sources)) S.reserve.sources = [];
             if (!S.subcats || typeof S.subcats !== 'object' || Array.isArray(S.subcats)) S.subcats = {};
             if (!Array.isArray(S.tags)) S.tags = [];
+            if (!S.alertsOff || typeof S.alertsOff !== 'object') S.alertsOff = {};
         }
         function normDesc(d) { return String(d || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
         const DESC_PREFIX = /^(entrada\s+pix|sa[ií]da\s+pix|pix\s+(enviado\s+para|recebido\s+de)|transfer[eê]ncia\s+(enviada\s+para|recebida\s+de)|d[eé]bito\s+de\s+cart[aã]o|compra\s+(no\s+)?(d[eé]bito|cr[eé]dito)|pagamento\s+de\s+boleto|pagamento\s+de\s+fatura|pagamento|outros\s+gastos|ted|doc)\s*[-:]?\s*/i;
@@ -4603,6 +4607,81 @@
         }
         window.calSelect = function (iso) { calSelDay = iso; renderCalendarReport(iso.slice(0, 7)); };
 
+
+        // =====================================================================
+        // ALERTAS DE GASTO FORA DO NORMAL: compara o mês atual com a média dos 3 meses anteriores
+        // (por categoria) e avisa gastos isolados muito acima do normal da categoria.
+        // =====================================================================
+        function spendAlerts() {
+            ensureSmartState();
+            const S = S_(), hoje = new Date(), ym = isoDate(hoje).slice(0, 7), dia = hoje.getDate(), diasMes = lastDayOf(ym);
+            const meses = [1, 2, 3].map(k => ymAdd(ym, -k));
+            // Só gasto do dia a dia: fora contas ainda não pagas (sem conta) e parcelas, que são compromissos já conhecidos
+            const desp = S.transactions.filter(t => t.type === 'expense' && t.account && !/[\(\[]\s*\d+\s*\/\s*\d+\s*[\)\]]|parcela\s*\d+\s*\/\s*\d+/i.test(String(t.desc || '')));
+            const porCatMes = {};
+            desp.forEach(t => { const m = String(t.date).slice(0, 7), c = t.category || 'Sem categoria'; (porCatMes[c] = porCatMes[c] || {})[m] = (porCatMes[c][m] || 0) + (Number(t.amount) || 0); });
+            const comDados = meses.filter(m => desp.some(t => String(t.date).slice(0, 7) === m));
+            const alertas = [];
+            if (comDados.length) Object.entries(porCatMes).forEach(([cat, pm]) => {
+                const media = comDados.reduce((a, m) => a + (pm[m] || 0), 0) / comDados.length;
+                const atual = pm[ym] || 0;
+                if (media < 30 || atual < 50) return;
+                const acima = atual / media - 1;                            // já passou da média do mês inteiro?
+                if (acima >= 0.2) alertas.push({ id: `cat:${cat}:${ym}`, tipo: 'cat', cat, atual, media, pct: acima, txt: `${Math.round(acima * 100)}% acima da sua média do mês inteiro` });
+            });
+            // Gastos isolados muito maiores que o normal da categoria (últimos 7 dias)
+            const semana = isoDate(new Date(hoje.getFullYear(), hoje.getMonth(), dia - 7));
+            desp.filter(t => t.date >= semana && t.date <= isoDate(hoje)).forEach(t => {
+                const outros = desp.filter(x => x !== t && x.category === t.category && x.date < semana).map(x => Number(x.amount) || 0).sort((a, b) => a - b);
+                if (outros.length < 3) return;
+                const mediana = outros[Math.floor(outros.length / 2)];
+                if (t.amount >= 150 && t.amount >= mediana * 3) alertas.push({ id: `tx:${t.id}`, tipo: 'tx', cat: t.category, atual: t.amount, media: mediana, pct: t.amount / mediana - 1, txt: `${escHTML(t.desc)} · ${(t.amount / mediana).toFixed(1).replace('.', ',')}x o valor de costume`, desc: t.desc });
+            });
+            // Gasto alto de uma categoria que já tem alerta vira detalhe dela (sem repetir)
+            const final = [];
+            alertas.forEach(a => {
+                if (a.tipo !== 'tx') return final.push(a);
+                const doCat = alertas.find(x => x.tipo === 'cat' && x.cat === a.cat);
+                if (doCat) { if (!doCat.maior || a.atual > doCat.maior.atual) doCat.maior = a; } else final.push(a);
+            });
+            final.forEach(a => { if (a.maior) a.txt += ` · maior: ${escHTML(a.maior.desc)} (${formatCurrency(a.maior.atual)})`; });
+            return final.filter(a => !S.alertsOff[a.id]).sort((a, b) => b.pct - a.pct);
+        }
+        function renderSpendAlerts() {
+            const box = document.getElementById('alertsCard'); if (!box) return;
+            const al = spendAlerts(), fmt = formatCurrency;
+            const semEmoji = c => String(c || '').replace(/^\p{Extended_Pictographic}️?\s*/u, '') || 'Sem categoria';
+            box.classList.toggle('hidden', !al.length);
+            if (!al.length) { box.innerHTML = ''; return; }
+            box.innerHTML = `<header class="flex items-center justify-between mb-2">
+                    <h3 class="dash-h3 text-sm font-semibold"><i class="fa-solid fa-triangle-exclamation text-amber-400"></i>Gastos fora do normal</h3>
+                    <span class="text-[11px] text-slate-400">${al.length} alerta(s)</span>
+                </header>
+                <div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${al.slice(0, 4).map(a => {
+                    const w = Math.min(100, a.atual / Math.max(a.atual, a.media * 1.6) * 100), wm = Math.min(100, a.media / Math.max(a.atual, a.media * 1.6) * 100);
+                    return `<div class="py-3">
+                        <div class="flex items-start gap-3">
+                            <span class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center bg-amber-400/15 text-amber-400"><i class="${a.tipo === 'tx' ? 'fa-solid fa-receipt' : 'fa-solid fa-arrow-trend-up'} text-sm"></i></span>
+                            <button type="button" onclick='alertOpen(${JSON.stringify(a.cat)})' class="min-w-0 flex-1 text-left">
+                                <p class="text-sm font-semibold truncate">${escHTML(semEmoji(a.cat))}${a.tipo === 'tx' ? ' · gasto alto' : ''}</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">${a.txt}</p>
+                            </button>
+                            <div class="text-right shrink-0"><p class="sensitive text-sm font-bold text-amber-400">${fmt(a.atual)}</p><p class="sensitive text-[10px] text-slate-500">${a.tipo === 'tx' ? 'costume' : 'média'} ${fmt(a.media)}</p></div>
+                            <button type="button" onclick="alertDismiss('${escHTML(a.id).replace(/'/g, '')}')" class="w-7 h-7 -mr-1 shrink-0 rounded-full text-slate-500 hover:text-slate-300" title="Dispensar" aria-label="Dispensar alerta"><i class="fa-solid fa-xmark text-xs"></i></button>
+                        </div>
+                        ${a.tipo !== 'tx' ? `<div class="ml-12 mt-2 relative h-1.5 rounded-full bg-slate-100 dark:bg-white/[0.06]"><span class="absolute inset-y-0 left-0 rounded-full bg-amber-400" style="width:${w}%"></span><span class="absolute -top-1 -bottom-1 w-0.5 rounded bg-slate-300" style="left:${wm}%" title="sua média"></span></div>` : ''}
+                    </div>`; }).join('')}</div>
+                <p class="text-[10px] text-slate-500 mt-1">Comparado com a média dos últimos 3 meses. O traço branco é a sua média.</p>`;
+        }
+        window.alertDismiss = function (id) { ensureSmartState(); S_().alertsOff[id] = Date.now(); saveAndRefresh(); showToast('Alerta dispensado'); };
+        window.alertOpen = function (cat) {
+            (window.navTo || switchTab)('transactions');
+            const d = new Date(), m = document.getElementById('filterMonth'), y = document.getElementById('filterYear');
+            if (m) m.value = String(d.getMonth() + 1).padStart(2, '0'); if (y) y.value = String(d.getFullYear());
+            document.getElementById('searchInput').value = String(cat || '').replace(/^\p{Extended_Pictographic}️?\s*/u, '').toLowerCase();
+            filterTransactions();
+        };
+
         function renderSmartFeatures() {
             ensureSmartState();
             try { renderSafeToSpend(); } catch (e) { console.warn('safe-to-spend', e); }
@@ -4611,6 +4690,7 @@
             try { renderRules(); } catch (e) { console.warn('rules', e); }
             try { renderBills(); } catch (e) { console.warn('vencimentos', e); }
             try { renderReserve(); } catch (e) { console.warn('reserva', e); }
+            try { renderSpendAlerts(); } catch (e) { console.warn('alertas', e); }
         }
 
         window.isFirstLoad = true;
