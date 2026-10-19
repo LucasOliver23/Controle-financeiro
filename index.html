@@ -507,6 +507,7 @@
                         <button type="button" role="tab" data-rpt="people" onclick="setReportTab('people')" class="rpt-chip"><i class="fa-solid fa-user-group"></i>Pessoas</button>
                         <button type="button" role="tab" data-rpt="projections" onclick="setReportTab('projections')" class="rpt-chip"><i class="fa-solid fa-wand-magic-sparkles"></i>Projeções</button>
                         <button type="button" role="tab" data-rpt="installments" onclick="setReportTab('installments')" class="rpt-chip"><i class="fa-solid fa-layer-group"></i>Parcelamentos</button>
+                        <button type="button" role="tab" data-rpt="irpf" onclick="setReportTab('irpf')" class="rpt-chip"><i class="fa-solid fa-landmark"></i>Imposto de Renda</button>
                     </div>
                 </div>
 
@@ -637,6 +638,25 @@
                         <h3 id="calDayTitle" class="text-[11px] font-bold text-slate-400 tracking-wider uppercase px-1 mb-2"></h3>
                         <div id="calDayList" class="rpt-card !p-0 overflow-hidden"></div>
                     </div>
+                </section>
+
+                <section data-rpt-panel="irpf" class="space-y-4 hidden">
+                    <div class="rpt-card">
+                        <div class="flex items-center justify-between gap-3">
+                            <div><p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ano-calendário</p><p class="text-[11px] text-slate-500">o que aconteceu de janeiro a dezembro</p></div>
+                            <select id="irYear" onchange="renderIrReport()" class="pill-select"></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div><p class="rpt-kpi-label">Rendimentos recebidos</p><p id="irIncTotal" class="sensitive text-lg font-bold text-emerald-500"></p></div>
+                            <div><p class="rpt-kpi-label">Possíveis dedutíveis</p><p id="irDedTotal" class="sensitive text-lg font-bold text-sky-400"></p></div>
+                        </div>
+                        <button type="button" onclick="exportIrExcel()" class="mt-4 w-full py-2.5 rounded-full bg-emerald-500 text-black text-sm font-bold"><i class="fa-solid fa-file-excel mr-1"></i>Baixar planilha (Excel)</button>
+                    </div>
+                    <div><h3 class="text-[11px] font-bold text-slate-400 tracking-wider uppercase px-1 mb-2">Rendimentos por fonte</h3><div id="irIncList" class="rpt-card !p-0 overflow-hidden"></div></div>
+                    <div><h3 class="text-[11px] font-bold text-slate-400 tracking-wider uppercase px-1 mb-2">Saúde e educação (para conferir)</h3><div id="irDedList" class="rpt-card !p-0 overflow-hidden"></div></div>
+                    <div><h3 id="irBensTitle" class="text-[11px] font-bold text-slate-400 tracking-wider uppercase px-1 mb-2">Bens e direitos</h3><div id="irBensList" class="rpt-card !p-0 overflow-hidden"></div></div>
+                    <div><h3 id="irDivTitle" class="text-[11px] font-bold text-slate-400 tracking-wider uppercase px-1 mb-2">Dívidas e ônus</h3><div id="irDivList" class="rpt-card !p-0 overflow-hidden"></div></div>
+                    <p class="text-[11px] text-slate-500 px-1"><i class="fa-solid fa-circle-info mr-1"></i>Este relatório só organiza o que está lançado no app. Para a declaração, use os informes de rendimentos dos bancos e da empresa e confira as regras de dedução no site da Receita Federal.</p>
                 </section>
 
                 <section data-rpt-panel="installments" class="space-y-5 hidden">
@@ -881,7 +901,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">35</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">36</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -967,7 +987,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">35</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">36</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1604,7 +1624,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 35;
+        var APP_VERSION = 36;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -3200,7 +3220,7 @@
             document.querySelectorAll('[data-rpt]').forEach(b => { const on = b.dataset.rpt === tab; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', on); });
             document.querySelectorAll('[data-rpt-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.rptPanel !== tab));
             const usesHorizon = tab === 'projections' || tab === 'installments';
-            document.getElementById('rptPeriodBar').classList.toggle('hidden', usesHorizon);
+            document.getElementById('rptPeriodBar').classList.toggle('hidden', usesHorizon || tab === 'irpf');
             document.getElementById('rptHorizonBar').classList.toggle('hidden', !usesHorizon);
             document.querySelectorAll('.rpt-h').forEach(b => { const on = Number(b.dataset.h) === reportState.horizon; b.classList.toggle('is-active', on); b.setAttribute('aria-checked', on); });
 
@@ -3219,6 +3239,7 @@
             else if (tab === 'projections') renderProjectionReport();
             else if (tab === 'installments') renderInstallmentReport();
             else if (tab === 'people') renderPeopleReport(periodType, selected);
+            else if (tab === 'irpf') renderIrReport();
             else if (tab === 'calendar') renderCalendarReport(periodType === 'month' ? selected : (String(selected) === String(new Date().getFullYear()) ? currentYM() : `${selected}-01`));
         }
 
@@ -4920,6 +4941,76 @@
             const id = t.receipt.id; delete t.receipt;
             idbDel(id); if (db && currentUser) deleteDoc(doc(db, 'users', currentUser.uid, 'comprovantes', id)).catch(() => {});
             closeReceipt(); saveAndRefresh(); if (catEditTxId === t.id) renderReceiptBox(t); showToast('Comprovante removido');
+        };
+
+
+        // =====================================================================
+        // RELATÓRIO PARA O IMPOSTO DE RENDA (Relatórios > Imposto de Renda): organiza o ano
+        // com os dados lançados — rendimentos por fonte, gastos com saúde/educação para conferir,
+        // saldo das contas em 31/12 e dívidas. Não calcula imposto.
+        // =====================================================================
+        function irData(ano) {
+            const S = S_(), fim = `${ano}-12-31`, ini = `${ano}-01-01`;
+            const doAno = S.transactions.filter(t => t.date >= ini && t.date <= fim);
+            const semEmoji = c => String(c || '').replace(/^\p{Extended_Pictographic}️?\s*/u, '') || 'Sem categoria';
+            // Rendimentos: agrupa pela pessoa/empresa (Pix e transferências) ou pela descrição
+            const fonteDe = t => { const p = typeof pixCounterpart === 'function' ? pixCounterpart(t.desc) : null; return titleCase(String(p || merchantOf(t.desc) || t.desc || 'Sem descrição')).slice(0, 60); };
+            const fontes = {};
+            doAno.filter(t => t.type === 'income').forEach(t => { const k = fonteDe(t); const f = fontes[k] = fontes[k] || { nome: k, cat: semEmoji(t.category), total: 0, n: 0, meses: new Set() }; f.total += t.amount; f.n++; f.meses.add(t.date.slice(5, 7)); });
+            const rend = Object.values(fontes).sort((a, b) => b.total - a.total);
+            // Saúde e educação: pela categoria (ex.: "🏥 Saúde", "Educação") ou palavras da descrição
+            const area = t => /sa[uú]de|m[eé]dic|odonto|dentist|hospital|cl[ií]nic|exame|laborat|psic|fisioter|plano de sa/i.test(`${t.category} ${t.sub || ''} ${t.desc}`) ? 'Saúde'
+                : /educa[cç]|escola|faculdade|universid|col[eé]gio|curso|mensalidade escolar/i.test(`${t.category} ${t.sub || ''} ${t.desc}`) ? 'Educação' : null;
+            const ded = doAno.filter(t => t.type === 'expense' && area(t)).map(t => ({ data: t.date, nome: t.desc, valor: t.amount, area: area(t), farmacia: /farm[aá]cia|drogaria|droga\s|pague menos|raia|pacheco/i.test(t.desc) }))
+                .sort((a, b) => a.data.localeCompare(b.data));
+            // Bens: saldo de cada conta em 31/12 (saldo inicial + lançamentos e transferências até a data)
+            const bens = S.accounts.map(a => {
+                let v = Number(a.balance) || 0;
+                S.transactions.forEach(t => { if (t.account === a.name && t.date <= fim) v += t.type === 'income' ? t.amount : -t.amount; });
+                (S.transfers || []).forEach(tr => { if (tr.date <= fim) v += (tr.to === a.name ? tr.amount : 0) - (tr.from === a.name ? tr.amount : 0); });
+                return { nome: a.name, tipo: 'Conta', valor: Math.round(v * 100) / 100 };
+            });
+            const invest = S.investments.map(i => ({ nome: i.name, tipo: 'Investimento', valor: Number(i.current) || Number(i.invested) || 0, aplicado: Number(i.invested) || 0 }));
+            const dividas = (S.debts || []).map(d => ({ nome: d.name, valor: debtLeft(d) * (Number(d.parcel) || 0), parcelas: debtLeft(d) })).filter(d => d.valor > 0);
+            return { ano, rend, ded, bens, invest, dividas, totRend: rend.reduce((a, f) => a + f.total, 0), totDed: ded.filter(d => !d.farmacia).reduce((a, d) => a + d.valor, 0) };
+        }
+        window.renderIrReport = function () {
+            const sel = document.getElementById('irYear'), atual = new Date().getFullYear();
+            if (!sel.options.length) {
+                const anos = [...new Set([atual, atual - 1, atual - 2, ...S_().transactions.map(t => Number(String(t.date).slice(0, 4)))].filter(Boolean))].sort((a, b) => b - a);
+                sel.innerHTML = anos.map(a => `<option value="${a}">${a}${a === atual ? ' (em andamento)' : ''}</option>`).join('');
+                sel.value = String(new Date().getMonth() < 4 ? atual - 1 : atual);
+            }
+            const D = irData(Number(sel.value)), fmt = formatCurrency, hojeAno = Number(sel.value) === atual;
+            document.getElementById('irIncTotal').textContent = fmt(D.totRend);
+            document.getElementById('irDedTotal').textContent = fmt(D.totDed);
+            const linha = (titulo, sub, valor, cor = '') => `<div class="flex items-center gap-3 px-4 py-3"><div class="min-w-0 flex-1"><p class="text-sm font-medium truncate">${titulo}</p><p class="text-[11px] text-slate-500 dark:text-slate-400">${sub}</p></div><p class="sensitive text-sm font-semibold shrink-0 ${cor}">${fmt(valor)}</p></div>`;
+            const vazio = t => `<p class="text-xs text-slate-400 px-4 py-5 text-center">${t}</p>`;
+            const lista = arr => `<div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${arr.join('')}</div>`;
+            document.getElementById('irIncList').innerHTML = D.rend.length ? lista(D.rend.slice(0, 15).map(f => linha(escHTML(f.nome), `${escHTML(f.cat)} · ${f.n} lançamento(s) em ${f.meses.size} ${f.meses.size > 1 ? 'meses' : 'mês'}`, f.total, 'text-emerald-500'))) : vazio('Nenhuma receita lançada neste ano.');
+            document.getElementById('irDedList').innerHTML = D.ded.length ? lista(D.ded.map(d => linha(escHTML(d.nome), `${fmtDateBR(d.data)} · ${d.area}${d.farmacia ? ' · <span class="text-amber-400">farmácia: em geral não entra como dedução</span>' : ''}`, d.valor, d.farmacia ? 'text-slate-500 line-through' : 'text-sky-400'))) : vazio('Nenhum gasto de saúde ou educação encontrado.');
+            document.getElementById('irBensTitle').textContent = hojeAno ? 'Bens e direitos · saldo de hoje (o ano ainda não fechou)' : `Bens e direitos · saldo em 31/12/${D.ano}`;
+            document.getElementById('irBensList').innerHTML = (D.bens.length || D.invest.length) ? lista([...D.bens.map(b => linha(escHTML(b.nome), 'Conta / carteira', b.valor)), ...D.invest.map(i => linha(escHTML(i.nome), `Investimento · aplicado ${fmt(i.aplicado)} · valor atual (o app não guarda o histórico)`, i.valor))]) : vazio('Nenhuma conta cadastrada.');
+            document.getElementById('irDivTitle').textContent = 'Dívidas e ônus · saldo devedor hoje';
+            document.getElementById('irDivList').innerHTML = D.dividas.length ? lista(D.dividas.map(d => linha(escHTML(d.nome), `${d.parcelas} parcela(s) em aberto (parcelas × valor, sem juros futuros)`, d.valor, 'text-rose-400'))) : vazio('Nenhuma dívida cadastrada em "Sair das dívidas".');
+        };
+        // Planilha Excel com uma aba por seção (SheetJS carregado só quando precisa)
+        function carregarXlsx() {
+            if (window.XLSX) return Promise.resolve(window.XLSX);
+            return new Promise((ok, erro) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; sc.onload = () => ok(window.XLSX); sc.onerror = () => erro(new Error('sem internet')); document.head.appendChild(sc); });
+        }
+        window.exportIrExcel = async function () {
+            const D = irData(Number(document.getElementById('irYear').value));
+            let X; try { X = await carregarXlsx(); } catch (e) { showToast('Precisa de internet para gerar a planilha'); return; }
+            const wb = X.utils.book_new(), aba = (nome, linhas) => X.utils.book_append_sheet(wb, X.utils.json_to_sheet(linhas.length ? linhas : [{ Aviso: 'Sem dados' }]), nome);
+            aba('Rendimentos', D.rend.map(f => ({ Fonte: f.nome, Categoria: f.cat, 'Lançamentos': f.n, Meses: f.meses.size, 'Total (R$)': Math.round(f.total * 100) / 100 })));
+            aba('Saúde e educação', D.ded.map(d => ({ Data: fmtDateBR(d.data), 'Descrição': d.nome, 'Área': d.area, 'Valor (R$)': d.valor, Obs: d.farmacia ? 'Farmácia: em geral não é dedutível' : '' })));
+            aba('Bens e direitos', [...D.bens.map(b => ({ Bem: b.nome, Tipo: b.tipo, [`Saldo 31/12/${D.ano} (R$)`]: b.valor })), ...D.invest.map(i => ({ Bem: i.nome, Tipo: 'Investimento', 'Aplicado (R$)': i.aplicado, 'Valor atual (R$)': i.valor }))]);
+            aba('Dívidas', D.dividas.map(d => ({ 'Dívida': d.nome, 'Parcelas em aberto': d.parcelas, 'Saldo (R$)': d.valor })));
+            const nome = `imposto-de-renda-${D.ano}.xlsx`;
+            const b64 = X.write(wb, { bookType: 'xlsx', type: 'base64' });
+            if (window.AndroidApp && AndroidApp.saveFile) { AndroidApp.saveFile(nome, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', b64); return; }
+            X.writeFile(wb, nome); showToast('Planilha baixada');
         };
 
         function renderSmartFeatures() {
