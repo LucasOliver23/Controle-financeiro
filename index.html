@@ -107,6 +107,17 @@
         .rpt-h.is-active { background: var(--accent); color: #000; }
         .rpt-card { background: #fff; border: 1px solid rgba(216,216,221,.7); border-radius: 24px; padding: 20px; }
         .dark .rpt-card { background: #1c1c1e; border-color: rgba(255,255,255,.07); }
+        /* ===== Calendário financeiro ===== */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+        .cal-wd { text-align: center; font-size: 10px; font-weight: 700; color: #8e8e93; padding-bottom: 4px; }
+        .cal-day { min-height: 58px; border-radius: 12px; padding: 4px 3px; display: flex; flex-direction: column; align-items: stretch; gap: 1px; background: rgba(142,142,147,.08); border: 1px solid transparent; text-align: left; overflow: hidden; }
+        .cal-day .n { font-size: 11px; font-weight: 700; color: #b8b8bf; padding-left: 2px; }
+        .cal-day .v { font-size: 9.5px; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 2px; }
+        .cal-day.hoje { border-color: #00d084; }
+        .cal-day.hoje .n { color: #00d084; }
+        .cal-day.prev { background: transparent; border: 1px dashed rgba(142,142,147,.35); }
+        .cal-day.sel { background: rgba(0,208,132,.16); border: 1px solid #00d084; }
+        .cal-day.vazio { background: transparent; }
         .rpt-kpi { background: #fff; border: 1px solid rgba(216,216,221,.7); border-radius: 20px; padding: 14px; min-width: 0; }
         .dark .rpt-kpi { background: #1c1c1e; border-color: rgba(255,255,255,.07); }
         .rpt-kpi-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6e6e73; }
@@ -476,6 +487,7 @@
                 <div class="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto no-scrollbar">
                     <div class="flex gap-2 w-max" role="tablist" aria-label="Tipos de relatório">
                         <button type="button" role="tab" data-rpt="cashflow" onclick="setReportTab('cashflow')" class="rpt-chip"><i class="fa-solid fa-chart-line"></i>Fluxo de caixa</button>
+                        <button type="button" role="tab" data-rpt="calendar" onclick="setReportTab('calendar')" class="rpt-chip"><i class="fa-regular fa-calendar-days"></i>Calendário</button>
                         <button type="button" role="tab" data-rpt="accrual" onclick="setReportTab('accrual')" class="rpt-chip"><i class="fa-solid fa-scale-balanced"></i>Competência</button>
                         <button type="button" role="tab" data-rpt="categories" onclick="setReportTab('categories')" class="rpt-chip"><i class="fa-solid fa-chart-pie"></i>Categorias</button>
                         <button type="button" role="tab" data-rpt="people" onclick="setReportTab('people')" class="rpt-chip"><i class="fa-solid fa-user-group"></i>Pessoas</button>
@@ -597,6 +609,22 @@
                 </section>
 
                 <!-- ---------- PARCELAMENTOS ---------- -->
+                <section data-rpt-panel="calendar" class="space-y-4 hidden">
+                    <div class="rpt-card !p-4">
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <div><p class="rpt-kpi-label">Entrou</p><p id="calIn" class="sensitive text-sm font-bold text-emerald-500 mt-0.5"></p></div>
+                            <div><p class="rpt-kpi-label">Saiu</p><p id="calOut" class="sensitive text-sm font-bold text-rose-500 mt-0.5"></p></div>
+                            <div><p class="rpt-kpi-label">Previsto até o fim</p><p id="calPrev" class="sensitive text-sm font-bold mt-0.5"></p></div>
+                        </div>
+                        <div class="cal-grid" id="calGrid"></div>
+                        <p class="text-[10px] text-slate-500 mt-3 flex flex-wrap gap-x-3 gap-y-1"><span><span class="text-emerald-500 font-bold">+</span> entrou</span><span><span class="text-rose-500 font-bold">−</span> saiu</span><span><span class="inline-block w-3 h-3 align-middle rounded border border-dashed border-slate-500 mr-1"></span>previsto (fixas, faturas, parcelas, salário)</span></p>
+                    </div>
+                    <div>
+                        <h3 id="calDayTitle" class="text-[11px] font-bold text-slate-400 tracking-wider uppercase px-1 mb-2"></h3>
+                        <div id="calDayList" class="rpt-card !p-0 overflow-hidden"></div>
+                    </div>
+                </section>
+
                 <section data-rpt-panel="installments" class="space-y-5 hidden">
                     <div class="rpt-card">
                         <p id="rptInstTitle" class="text-xs font-medium text-slate-500 dark:text-slate-400">Comprometido nos próximos meses</p>
@@ -839,7 +867,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">31</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">32</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -914,7 +942,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">31</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">32</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1529,7 +1557,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 31;
+        var APP_VERSION = 32;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -3136,6 +3164,7 @@
             else if (tab === 'projections') renderProjectionReport();
             else if (tab === 'installments') renderInstallmentReport();
             else if (tab === 'people') renderPeopleReport(periodType, selected);
+            else if (tab === 'calendar') renderCalendarReport(periodType === 'month' ? selected : (String(selected) === String(new Date().getFullYear()) ? currentYM() : `${selected}-01`));
         }
 
         // Reage à troca de aba principal (switchTab) sem mexer nele
@@ -4508,6 +4537,71 @@
                 </div>`; }).join('')
                 : `<p class="text-xs text-slate-400 text-center py-6">Nenhuma etiqueta ainda. Crie uma acima e marque os lançamentos tocando na categoria deles no extrato.</p>`;
         };
+
+
+        // =====================================================================
+        // CALENDÁRIO FINANCEIRO (Relatórios > Calendário): o mês dia a dia, com o que entrou,
+        // o que saiu e o que está previsto (fixas, faturas, parcelas de dívidas e salário).
+        // =====================================================================
+        let calSelDay = null;
+        function calendarItems(ym) {
+            const S = S_(), hojeISO = isoDate(new Date()), itens = [];
+            S.transactions.forEach(t => { if (String(t.date).slice(0, 7) === ym) itens.push({ data: t.date, nome: t.desc || 'Sem descrição', valor: Number(t.amount) || 0, tipo: t.type === 'income' ? 'in' : 'out', prev: false, pend: t.type !== 'income' && !t.account, cat: t.category }); });
+            (S.transfers || []).forEach(tr => { if (String(tr.date).slice(0, 7) === ym) itens.push({ data: tr.date, nome: tr.desc || `${tr.from} → ${tr.to}`, valor: tr.amount, tipo: 'tr', prev: false }); });
+            // Previstos: só do dia de hoje em diante
+            const fimMes = `${ym}-${String(lastDayOf(ym)).padStart(2, '0')}`;
+            if (fimMes >= hojeISO) {
+                const horiz = Math.max(0, diasAte(fimMes)) + 1;
+                upcomingBills(horiz).forEach(b => { if (b.kind !== 'pend' && b.data.slice(0, 7) === ym && b.data >= hojeISO) itens.push({ data: b.data, nome: b.nome, valor: b.valor, tipo: 'out', prev: true, kind: b.kind }); });
+                S.recurring.filter(r => r.type === 'income').forEach(r => {
+                    const d = `${ym}-${String(Math.min(Number(r.day) || 1, lastDayOf(ym))).padStart(2, '0')}`;
+                    const n = normDesc(r.desc);
+                    const lancado = S.transactions.some(t => t.type === 'income' && String(t.date).slice(0, 7) === ym && n && normDesc(t.desc).includes(n));
+                    if (d >= hojeISO && !lancado) itens.push({ data: d, nome: r.desc, valor: Number(r.amount) || 0, tipo: 'in', prev: true, kind: 'rec' });
+                });
+            }
+            return itens;
+        }
+        const curto = v => { const a = Math.abs(v); return a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1).replace('.', ',').replace(',0', '') + 'k' : String(Math.round(a)); };
+        function renderCalendarReport(ym) {
+            const itens = calendarItems(ym), hojeISO = isoDate(new Date()), fmt = formatCurrency;
+            const [y, m] = ym.split('-').map(Number), dias = lastDayOf(ym), primeiro = new Date(y, m - 1, 1).getDay();
+            if (!calSelDay || calSelDay.slice(0, 7) !== ym) calSelDay = hojeISO.slice(0, 7) === ym ? hojeISO : (itens.map(i => i.data).sort()[0] || `${ym}-01`);
+            const futuroPend = i => i.pend && i.data >= hojeISO;
+            const real = itens.filter(i => !i.prev && !futuroPend(i)), prev = itens.filter(i => i.prev || futuroPend(i));
+            const soma = (l, tipo) => l.filter(i => i.tipo === tipo).reduce((a, i) => a + i.valor, 0);
+            document.getElementById('calIn').textContent = fmt(soma(real, 'in'));
+            document.getElementById('calOut').textContent = fmt(soma(real, 'out'));
+            const pv = soma(prev, 'in') - soma(prev, 'out'), pvEl = document.getElementById('calPrev');
+            pvEl.textContent = prev.length ? `${pv >= 0 ? '+' : '−'} ${fmt(Math.abs(pv))}` : '—';
+            pvEl.className = `sensitive text-sm font-bold mt-0.5 ${!prev.length ? 'text-slate-400' : pv >= 0 ? 'text-emerald-500' : 'text-amber-400'}`;
+            let html = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => `<div class="cal-wd">${d}</div>`).join('');
+            for (let i = 0; i < primeiro; i++) html += '<div class="cal-day vazio"></div>';
+            for (let d = 1; d <= dias; d++) {
+                const iso = `${ym}-${String(d).padStart(2, '0')}`, doDia = itens.filter(i => i.data === iso);
+                const inn = soma(doDia, 'in'), out = soma(doDia, 'out'), soPrev = doDia.length && doDia.every(i => i.prev || (i.pend && i.data >= hojeISO));
+                html += `<button type="button" onclick="calSelect('${iso}')" class="cal-day ${iso === hojeISO ? 'hoje' : ''} ${iso === calSelDay ? 'sel' : ''} ${soPrev ? 'prev' : ''}">
+                    <span class="n">${d}</span>
+                    ${inn ? `<span class="v sensitive text-emerald-400">+${curto(inn)}</span>` : ''}
+                    ${out ? `<span class="v sensitive ${soPrev ? 'text-amber-300' : 'text-rose-400'}">−${curto(out)}</span>` : ''}
+                </button>`;
+            }
+            document.getElementById('calGrid').innerHTML = html;
+            const doSel = itens.filter(i => i.data === calSelDay).sort((a, b) => (a.prev - b.prev) || (b.valor - a.valor));
+            const dt = new Date(calSelDay + 'T12:00:00');
+            document.getElementById('calDayTitle').textContent = `${['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][dt.getDay()]}, ${dt.getDate()} de ${MONTH_NAMES[dt.getMonth()].toLowerCase()}${calSelDay === hojeISO ? ' · hoje' : ''}`;
+            document.getElementById('calDayList').innerHTML = doSel.length ? `<div class="divide-y divide-slate-100 dark:divide-white/[0.06]">${doSel.map(i => {
+                const cor = i.tipo === 'in' ? '#00d084' : i.tipo === 'tr' ? '#38bdf8' : '#f43f5e';
+                const ico = i.tipo === 'tr' ? 'fa-solid fa-right-left' : i.prev ? (BILL_KIND[i.kind] || BILL_KIND.rec).icon : i.tipo === 'in' ? 'fa-solid fa-arrow-down' : 'fa-solid fa-arrow-up';
+                const sub = i.prev ? `Previsto · ${i.tipo === 'in' ? 'recebimento fixo' : (BILL_KIND[i.kind] || BILL_KIND.rec).nome}` : i.tipo === 'tr' ? 'Transferência entre contas' : i.pend ? 'A pagar' : escHTML(String(i.cat || '').replace(/^\p{Extended_Pictographic}️?\s*/u, ''));
+                return `<div class="flex items-center gap-3 px-4 py-3 ${i.prev ? 'opacity-80' : ''}">
+                    <span class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${i.prev ? 'border border-dashed' : ''}" style="background:${cor}1f;color:${cor};border-color:${cor}66"><i class="${ico} text-sm"></i></span>
+                    <div class="min-w-0 flex-1"><p class="text-sm font-medium truncate">${escHTML(i.nome)}</p><p class="text-[11px] ${i.pend ? 'text-amber-400' : 'text-slate-500 dark:text-slate-400'}">${sub}</p></div>
+                    <p class="sensitive text-sm font-semibold shrink-0" style="color:${i.tipo === 'out' && !i.prev ? '' : cor}">${i.tipo === 'in' ? '+' : i.tipo === 'out' ? '−' : ''} ${fmt(i.valor)}</p>
+                </div>`; }).join('')}</div>`
+                : `<p class="text-xs text-slate-400 px-4 py-6 text-center">Nada neste dia.</p>`;
+        }
+        window.calSelect = function (iso) { calSelDay = iso; renderCalendarReport(iso.slice(0, 7)); };
 
         function renderSmartFeatures() {
             ensureSmartState();
