@@ -880,6 +880,7 @@
                         <button type="button" data-nav="investments" class="pf-tile"><span class="set-icon" style="--c:#8b5cf6"><i class="fa-solid fa-arrow-trend-up"></i></span>Investimentos</button>
                         <button type="button" data-nav="goals" class="pf-tile"><span class="set-icon" style="--c:#f59e0b"><i class="fa-solid fa-bullseye"></i></span>Metas</button>
                         <button type="button" data-nav="budgets" class="pf-tile"><span class="set-icon" style="--c:#06b6d4"><i class="fa-solid fa-sliders"></i></span>Limites</button>
+                        <button type="button" onclick="openProfileSub('split')" class="pf-tile"><span class="set-icon" style="--c:#14b8a6"><i class="fa-solid fa-people-arrows"></i></span>Divididas</button>
                     </div>
                 </div>
                 <div>
@@ -901,7 +902,7 @@
                 <div class="set-group">
                         <button type="button" onclick="openAuthModal()" class="set-row text-rose-500 font-semibold"><span class="set-icon" style="--c:#f43f5e"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span id="authBtnText" class="set-label">Login</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                 </div>
-                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">36</span></p>
+                    <p class="text-center text-[11px] text-slate-400 pb-2">Controle Financeiro Pro · versão <span class="app-version-num">37</span></p>
                 </div>
 
                 <!-- ---------- SUB-TELA: EDITAR PERFIL ---------- -->
@@ -916,6 +917,22 @@
                         </div>
                         <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold hover:brightness-110 transition">Salvar alterações</button>
                     </form>
+                </div>
+
+                <!-- ---------- SUB-TELA: DESPESAS DIVIDIDAS ---------- -->
+                <div id="profileSub-split" class="hidden space-y-4">
+                    <button type="button" onclick="closeProfileSub()" class="flex items-center gap-2 text-sm font-semibold text-emerald-500"><i class="fa-solid fa-chevron-left text-xs"></i> Perfil</button>
+                    <h2 class="text-2xl font-bold tracking-tight">Despesas divididas</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rpt-card !p-4"><p class="rpt-kpi-label">Te devem</p><p id="splitToReceive" class="sensitive text-lg font-bold text-emerald-500"></p></div>
+                        <div class="rpt-card !p-4"><p class="rpt-kpi-label">Você deve</p><p id="splitToPay" class="sensitive text-lg font-bold text-rose-400"></p></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="(window.navTo||switchTab)('transactions'); showToast('Toque na categoria de um gasto e depois em Dividir')" class="py-2.5 rounded-full bg-emerald-500 text-black text-sm font-bold"><i class="fa-solid fa-people-arrows mr-1"></i>Dividir um gasto</button>
+                        <button type="button" onclick="openOweModal()" class="py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-semibold"><i class="fa-solid fa-hand-holding-dollar mr-1"></i>Eu devo a alguém</button>
+                    </div>
+                    <div id="splitPeople" class="space-y-3"></div>
+                    <p class="text-[11px] text-slate-500 px-1">Quando receber ou pagar (Pix, dinheiro), toque em <b>Recebi</b> ou <b>Paguei</b>. Se o Pix vier no extrato importado, ele já entra como lançamento normal.</p>
                 </div>
 
                 <!-- ---------- SUB-TELA: SUBCATEGORIAS ---------- -->
@@ -987,7 +1004,7 @@
                     <div>
                         <h3 class="set-title">Sobre o app</h3>
                         <div class="set-group">
-                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">36</span></span></div>
+                            <div class="set-row cursor-default"><span class="set-icon" style="--c:#00d084"><i class="fa-solid fa-circle-info"></i></span><span class="set-label">Versão do app</span><span class="text-xs text-slate-400 mr-1">versão <span class="app-version-num">37</span></span></div>
                             <button type="button" onclick="checkAppUpdate(true)" class="set-row"><span class="set-icon" style="--c:#0ea5e9"><i class="fa-solid fa-rotate"></i></span><span class="set-label">Procurar atualização</span><i class="fa-solid fa-chevron-right text-[11px] text-slate-400 dark:text-slate-500"></i></button>
                         </div>
                     </div>
@@ -1085,6 +1102,34 @@
             <button type="button" onclick="saveReceipt()" class="py-3 rounded-full bg-white/10 text-white text-sm font-semibold"><i class="fa-solid fa-download mr-1"></i>Salvar no celular</button>
             <button type="button" onclick="removeReceipt()" class="py-3 rounded-full bg-rose-500/20 text-rose-300 text-sm font-semibold"><i class="fa-solid fa-trash mr-1"></i>Remover</button>
         </div>
+    </div>
+
+    <div id="splitModal" class="fixed inset-0 z-[65] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+        <form onsubmit="saveSplit(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-6 space-y-4 border border-slate-200 dark:border-white/[0.08]">
+            <div class="flex justify-between items-center"><h3 class="font-bold text-lg">Dividir gasto</h3><button type="button" onclick="closeSplitModal()" class="text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="rounded-xl bg-black p-3"><p id="splitTxDesc" class="text-sm font-semibold"></p><p id="splitTxInfo" class="sensitive text-xs text-slate-400"></p></div>
+            <div>
+                <p class="text-[11px] text-slate-400 mb-1.5">Com quem? <span class="text-slate-500">(toque para marcar ou escreva um nome novo)</span></p>
+                <div id="splitKnown" class="flex flex-wrap gap-1.5 mb-2"></div>
+                <div class="flex gap-2"><input id="splitNewName" placeholder="Nome (ex.: Ana)" maxlength="30" class="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"><button type="button" onclick="splitAddName()" class="px-4 rounded-xl bg-teal-500/20 text-teal-300 text-sm font-bold">Adicionar</button></div>
+            </div>
+            <label class="flex items-center gap-3"><input type="checkbox" id="splitIncludeMe" checked onchange="splitRecalc()" class="w-5 h-5 accent-emerald-500"><span class="text-sm">Dividir em partes iguais, incluindo eu</span></label>
+            <div id="splitRows" class="space-y-2"></div>
+            <p id="splitSummary" class="sensitive text-[12px] font-semibold text-teal-300 min-h-[18px]"></p>
+            <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Salvar divisão</button>
+            <button type="button" id="splitRemoveBtn" onclick="removeSplitOfTx()" class="hidden w-full py-2 text-xs font-semibold text-rose-400">Desfazer divisão</button>
+        </form>
+    </div>
+
+    <div id="oweModal" class="fixed inset-0 z-[65] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
+        <form onsubmit="saveOwe(event)" class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-6 space-y-3 border border-slate-200 dark:border-white/[0.08]">
+            <div class="flex justify-between items-center"><h3 class="font-bold text-lg">Eu devo a alguém</h3><button type="button" onclick="closeOweModal()" class="text-slate-400" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
+            <p class="text-[12px] text-slate-400">Para quando outra pessoa pagou por você (ex.: a conta do restaurante).</p>
+            <input id="oweName" required maxlength="30" placeholder="Para quem? (ex.: João)" list="owePeople" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white"><datalist id="owePeople"></datalist>
+            <input id="oweDesc" required maxlength="60" placeholder="Do quê? (ex.: Pizza sexta)" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white">
+            <input id="oweAmount" type="number" step="0.01" min="0.01" required placeholder="Valor (R$)" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 text-sm text-white">
+            <button type="submit" class="w-full py-3 rounded-full bg-emerald-500 text-black text-sm font-bold">Salvar</button>
+        </form>
     </div>
 
     <div id="reserveModal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm hidden p-0 sm:p-4">
@@ -1375,6 +1420,7 @@
                 <div id="catEditReceipt" class="flex items-center gap-3"></div>
                 <input type="file" id="receiptInput" accept="image/*" class="hidden" onchange="attachReceipt(this)">
             </div>
+            <button type="button" id="catEditSplitBtn" onclick="openSplitModal(catEditTxIdPublic())" class="w-full py-2.5 rounded-xl border border-dashed border-teal-500/50 text-sm text-teal-300"><i class="fa-solid fa-people-arrows mr-1.5"></i><span id="catEditSplitTxt">Dividir este gasto com alguém</span></button>
             <div id="catEditTagsBox"><p class="text-[11px] text-slate-400 mb-1.5">Etiquetas <button type="button" onclick="closeCatEdit(); (window.navTo||switchTab)('profile'); openProfileSub('tags')" class="text-emerald-500 font-semibold ml-1">gerenciar</button></p><div id="catEditTags" class="flex flex-wrap gap-1.5"></div></div>
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" id="catEditRemember" onchange="updateCatEdit()" class="w-5 h-5 accent-emerald-500">
@@ -1624,7 +1670,7 @@
          * para a tela e a cada 15 minutos; se o número for maior, mostra o aviso
          * "Nova versão disponível" com o botão Atualizar agora.
          */
-        var APP_VERSION = 36;
+        var APP_VERSION = 37;
         var UPDATE_DISMISS_KEY = 'cfp-update-dispensada';
         var latestRemote = null;
         document.querySelectorAll('.app-version-num').forEach(function (el) { el.textContent = APP_VERSION; });
@@ -1673,15 +1719,16 @@
         /* ---------- Perfil: sub-telas (Editar perfil / Configurações) ---------- */
         window.openProfileSub = function (name) {
             document.getElementById('profileMain').classList.add('hidden');
-            ['edit', 'settings', 'subcats', 'tags'].forEach(function (n) {
+            ['edit', 'settings', 'subcats', 'tags', 'split'].forEach(function (n) {
                 document.getElementById('profileSub-' + n).classList.toggle('hidden', n !== name);
             });
+            if (name === 'split' && window.renderSplits) window.renderSplits();
             if (name === 'settings') window.syncSettingsSwitches();
             if ((name === 'subcats' || name === 'tags') && window.renderOrganize) window.renderOrganize();
             var main = document.getElementById('appMain'); if (main) main.scrollTop = 0;
         };
         window.closeProfileSub = function () {
-            ['edit', 'settings', 'subcats', 'tags'].forEach(function (n) { document.getElementById('profileSub-' + n).classList.add('hidden'); });
+            ['edit', 'settings', 'subcats', 'tags', 'split'].forEach(function (n) { document.getElementById('profileSub-' + n).classList.add('hidden'); });
             document.getElementById('profileMain').classList.remove('hidden');
         };
         window.syncSettingsSwitches = function () {
@@ -1703,7 +1750,7 @@
         import { initializeFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCSDNwBWQ0tYqvAhoBi_d18D0MCboad4v0", authDomain: "controle-financeiro-e5936.firebaseapp.com", projectId: "controle-financeiro-e5936" };
-        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve','subcats','tags','alertsOff'];
+        const SYNC_KEYS = ['accounts','cards','categories','categoryImages','budgets','recurring','transactions','investments','goals','profile','rules','ignoredSubs','debts','debtPlan','reminders','transfers','reserve','subcats','tags','alertsOff','splits'];
         let app, db, auth, currentUser = null;
         let cloudReady = false, syncedUid = null, pushTimer = null;
         try { 
@@ -1747,6 +1794,7 @@
             subcats: JSON.parse(localStorage.getItem('df_subcats')) || {},
             tags: JSON.parse(localStorage.getItem('df_tags')) || [],
             alertsOff: JSON.parse(localStorage.getItem('df_alertsOff')) || {},
+            splits: JSON.parse(localStorage.getItem('df_splits')) || [],
             profile: JSON.parse(localStorage.getItem('df_profile')) || { name: 'Lucas Oliveira', phone: '', email: 'loliveira508@gmail.com', avatar: '' }
         };
 
@@ -2164,7 +2212,7 @@
         window.closeCategoryModal = () => document.getElementById('categoryModal').classList.add('hidden');
         window.handleCategorySubmit = function(e) { e.preventDefault(); const o = document.getElementById('catOldName').value.trim(), n = document.getElementById('catName').value.trim(), img = document.getElementById('catImageUrl').value.trim(); if (!n) return; if (!window.appState.categoryImages) window.appState.categoryImages = {}; if (o) { const i = window.appState.categories.indexOf(o); if (i !== -1) window.appState.categories[i] = n; if (o !== n) { window.appState.transactions.forEach(t => { if (t.category === o) t.category = n; }); if (window.appState.subcats && window.appState.subcats[o]) { window.appState.subcats[n] = window.appState.subcats[o]; delete window.appState.subcats[o]; } if (window.appState.budgets[o] !== undefined) { window.appState.budgets[n] = window.appState.budgets[o]; delete window.appState.budgets[o]; } } if (img) window.appState.categoryImages[n] = img; else delete window.appState.categoryImages[n]; if (o !== n) delete window.appState.categoryImages[o]; } else { if (!window.appState.categories.includes(n)) window.appState.categories.push(n); if (img) window.appState.categoryImages[n] = img; } closeCategoryModal(); saveAndRefresh(); showToast('Categoria salva!'); }
 
-        window.deleteTransaction = id => { const rc = (window.appState.transactions.find(t => t.id === id) || {}).receipt; if (rc && window.dropReceiptFile) window.dropReceiptFile(rc.id); window.appState.transactions = window.appState.transactions.filter(t=>t.id!==id); saveAndRefresh(); }
+        window.deleteTransaction = id => { const rc = (window.appState.transactions.find(t => t.id === id) || {}).receipt; if (rc && window.dropReceiptFile) window.dropReceiptFile(rc.id); window.appState.transactions = window.appState.transactions.filter(t=>t.id!==id); if (window.appState.splits) window.appState.splits = window.appState.splits.filter(x => x.txId !== id || x.paid); saveAndRefresh(); }
         window.deleteAccount = id => { window.appState.accounts = window.appState.accounts.filter(a=>a.id!==id); saveAndRefresh(); }
         window.deleteCard = id => { window.appState.cards = window.appState.cards.filter(c=>c.id!==id); saveAndRefresh(); }
         window.deleteRecurring = id => { window.appState.recurring = window.appState.recurring.filter(r=>r.id!==id); saveAndRefresh(); }
@@ -3116,6 +3164,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <p class="sensitive text-sm font-semibold whitespace-nowrap ${isInc ? 'text-emerald-400' : 'text-white'}">${isInc ? '+' : '−'} ${formatCurrency(t.amount)}</p>
+                            ${(window.appState.splits || []).some(x => x.txId === t.id) ? `<p class="mt-1 text-[10px] font-semibold text-teal-300"><i class="fa-solid fa-people-arrows mr-0.5"></i>Dividido</p>` : ''}
                             ${t.receipt ? `<button type="button" onclick="event.stopPropagation(); openReceipt('${t.id}')" class="mt-1 px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-semibold"><i class="fa-solid fa-paperclip mr-0.5"></i>Comprovante</button>` : ''}
                             ${pend ? `<button type="button" onclick="event.stopPropagation(); openPayModal('${t.id}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-400 text-[11px] font-semibold">Pagar</button>` : ''}
                         </div>
@@ -3565,6 +3614,7 @@
             if (!S.subcats || typeof S.subcats !== 'object' || Array.isArray(S.subcats)) S.subcats = {};
             if (!Array.isArray(S.tags)) S.tags = [];
             if (!S.alertsOff || typeof S.alertsOff !== 'object') S.alertsOff = {};
+            if (!Array.isArray(S.splits)) S.splits = [];
         }
         function normDesc(d) { return String(d || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
         const DESC_PREFIX = /^(entrada\s+pix|sa[ií]da\s+pix|pix\s+(enviado\s+para|recebido\s+de)|transfer[eê]ncia\s+(enviada\s+para|recebida\s+de)|d[eé]bito\s+de\s+cart[aã]o|compra\s+(no\s+)?(d[eé]bito|cr[eé]dito)|pagamento\s+de\s+boleto|pagamento\s+de\s+fatura|pagamento|outros\s+gastos|ted|doc)\s*[-:]?\s*/i;
@@ -3600,6 +3650,7 @@
             sel.innerHTML = S_().categories.map(c => `<option value="${escHTML(c)}">${escHTML(c)}</option>`).join('');
             sel.value = t.category;
             fillSubSelect('catEditSub', t.category, t.sub); fillTagChips('catEditTags', t.tags || []); renderReceiptBox(t);
+            { const n = (S_().splits || []).filter(x => x.txId === t.id).length; document.getElementById('catEditSplitBtn').classList.toggle('hidden', t.type !== 'expense'); document.getElementById('catEditSplitTxt').textContent = n ? `Dividido com ${n} pessoa(s) · editar` : 'Dividir este gasto com alguém'; }
             document.getElementById('catEditKeyword').value = suggestRuleKeyword(t.desc);
             document.getElementById('catEditRemember').checked = true;
             document.getElementById('catEditApplyAll').checked = true;
@@ -5011,6 +5062,119 @@
             const b64 = X.write(wb, { bookType: 'xlsx', type: 'base64' });
             if (window.AndroidApp && AndroidApp.saveFile) { AndroidApp.saveFile(nome, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', b64); return; }
             X.writeFile(wb, nome); showToast('Planilha baixada');
+        };
+
+
+        // =====================================================================
+        // DESPESAS DIVIDIDAS: appState.splits = [{ id, txId, desc, date, kind: 'receber'|'pagar',
+        // name, amount, paid, paidAt }]. Cada linha é uma pessoa. "receber" = gasto que você pagou
+        // e dividiu; "pagar" = alguém pagou por você.
+        // =====================================================================
+        window.catEditTxIdPublic = () => catEditTxId;
+        const splitPeople = () => [...new Set(S_().splits.map(x => x.name))].sort((a, b) => a.localeCompare(b));
+        let splitTx = null, splitSel = [];
+        window.openSplitModal = function (txId) {
+            ensureSmartState();
+            const t = S_().transactions.find(x => x.id === txId); if (!t) return;
+            splitTx = t;
+            const atuais = S_().splits.filter(x => x.txId === t.id);
+            splitSel = atuais.map(x => ({ name: x.name, amount: x.amount, paid: x.paid }));
+            document.getElementById('splitTxDesc').textContent = t.desc;
+            document.getElementById('splitTxInfo').textContent = `${formatCurrency(t.amount)} · ${fmtDateBR(t.date)}`;
+            document.getElementById('splitIncludeMe').checked = true;
+            document.getElementById('splitRemoveBtn').classList.toggle('hidden', !atuais.length);
+            document.getElementById('splitNewName').value = '';
+            splitDraw(!atuais.length);
+            closeCatEdit();
+            document.getElementById('splitModal').classList.remove('hidden');
+        };
+        window.closeSplitModal = () => document.getElementById('splitModal').classList.add('hidden');
+        function splitDraw(recalc) {
+            const conhecidos = splitPeople();
+            document.getElementById('splitKnown').innerHTML = conhecidos.map(n => `<button type="button" onclick='splitToggle(${JSON.stringify(n)})' class="chip ${splitSel.some(p => p.name === n) ? 'on' : ''}">${escHTML(n)}</button>`).join('') || '<span class="text-[11px] text-slate-500">Ninguém ainda. Escreva o nome abaixo.</span>';
+            if (recalc) splitRecalc(); else splitRowsDraw();
+        }
+        window.splitDraw = r => splitDraw(r);
+        function splitRowsDraw() {
+            const total = splitTx.amount, soma = splitSel.reduce((a, p) => a + (Number(p.amount) || 0), 0);
+            document.getElementById('splitRows').innerHTML = splitSel.map((p, i) => `<div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-xs font-bold shrink-0">${escHTML(p.name.slice(0, 1).toUpperCase())}</span>
+                <span class="flex-1 text-sm truncate">${escHTML(p.name)} te deve</span>
+                <input type="number" step="0.01" min="0" value="${(Number(p.amount) || 0).toFixed(2)}" oninput="splitSel[${i}].amount = parseFloat(this.value) || 0; splitSummary()" class="w-28 px-3 py-2 rounded-xl bg-slate-800 text-sm text-white text-right">
+                <button type="button" onclick="splitSel.splice(${i}, 1); splitDraw(true)" class="w-8 h-8 text-slate-500" aria-label="Tirar"><i class="fa-solid fa-xmark"></i></button></div>`).join('');
+            window.splitSel = splitSel; splitSummary();
+        }
+        window.splitSummary = function () {
+            const total = splitTx.amount, soma = splitSel.reduce((a, p) => a + (Number(p.amount) || 0), 0);
+            document.getElementById('splitSummary').textContent = splitSel.length ? `Te devolvem ${formatCurrency(soma)} · sua parte: ${formatCurrency(total - soma)}` : 'Marque ou adicione quem vai dividir com você.';
+        };
+        window.splitRecalc = function () {
+            const n = splitSel.length; if (!n) { splitRowsDraw(); return; }
+            const partes = document.getElementById('splitIncludeMe').checked ? n + 1 : n;
+            const cada = Math.floor(splitTx.amount / partes * 100) / 100;
+            splitSel.forEach(p => p.amount = cada);
+            splitRowsDraw();
+        };
+        window.splitToggle = function (nome) {
+            const i = splitSel.findIndex(p => p.name === nome);
+            if (i >= 0) splitSel.splice(i, 1); else splitSel.push({ name: nome, amount: 0, paid: false });
+            splitDraw(true);
+        };
+        window.splitAddName = function () {
+            const el = document.getElementById('splitNewName'), nome = limpaNome(el.value); if (!nome) return;
+            if (!splitSel.some(p => p.name.toLowerCase() === nome.toLowerCase())) splitSel.push({ name: nome, amount: 0, paid: false });
+            el.value = ''; splitDraw(true);
+        };
+        window.saveSplit = function (e) {
+            e.preventDefault();
+            const nomeNovo = limpaNome(document.getElementById('splitNewName').value);
+            if (nomeNovo) { window.splitAddName(); }
+            if (!splitSel.length) { showToast('Escolha pelo menos uma pessoa'); return; }
+            const S = S_(), t = splitTx;
+            S.splits = S.splits.filter(x => x.txId !== t.id);
+            splitSel.filter(p => (Number(p.amount) || 0) > 0).forEach((p, k) => S.splits.push({ id: `sp_${Date.now()}_${k}`, txId: t.id, desc: t.desc, date: t.date, kind: 'receber', name: p.name, amount: Math.round(p.amount * 100) / 100, paid: !!p.paid }));
+            closeSplitModal(); saveAndRefresh(); showToast(`Dividido com ${splitSel.length} pessoa(s)`);
+        };
+        window.removeSplitOfTx = function () {
+            if (!confirm('Desfazer a divisão deste gasto?')) return;
+            S_().splits = S_().splits.filter(x => x.txId !== splitTx.id); closeSplitModal(); saveAndRefresh();
+        };
+        window.openOweModal = function () {
+            document.getElementById('owePeople').innerHTML = splitPeople().map(n => `<option value="${escHTML(n)}">`).join('');
+            ['oweName', 'oweDesc', 'oweAmount'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('oweModal').classList.remove('hidden');
+        };
+        window.closeOweModal = () => document.getElementById('oweModal').classList.add('hidden');
+        window.saveOwe = function (e) {
+            e.preventDefault(); ensureSmartState();
+            S_().splits.push({ id: 'sp_' + Date.now(), txId: null, desc: document.getElementById('oweDesc').value.trim(), date: isoDate(new Date()), kind: 'pagar', name: limpaNome(document.getElementById('oweName').value), amount: Math.round((parseFloat(document.getElementById('oweAmount').value) || 0) * 100) / 100, paid: false });
+            closeOweModal(); saveAndRefresh(); renderSplits();
+        };
+        window.splitMarkPaid = function (id) { const x = S_().splits.find(s => s.id === id); if (!x) return; x.paid = !x.paid; x.paidAt = x.paid ? Date.now() : null; saveAndRefresh(); renderSplits(); };
+        window.splitDelete = function (id) { if (!confirm('Excluir este item?')) return; S_().splits = S_().splits.filter(s => s.id !== id); saveAndRefresh(); renderSplits(); };
+        window.renderSplits = function () {
+            ensureSmartState();
+            const S = S_(), fmt = formatCurrency, abertos = S.splits.filter(x => !x.paid);
+            const box = document.getElementById('splitPeople'); if (!box) return;
+            document.getElementById('splitToReceive').textContent = fmt(abertos.filter(x => x.kind === 'receber').reduce((a, x) => a + x.amount, 0));
+            document.getElementById('splitToPay').textContent = fmt(abertos.filter(x => x.kind === 'pagar').reduce((a, x) => a + x.amount, 0));
+            const pessoas = splitPeople().map(n => {
+                const itens = S.splits.filter(x => x.name === n).sort((a, b) => (a.paid - b.paid) || b.date.localeCompare(a.date));
+                const saldo = itens.filter(x => !x.paid).reduce((a, x) => a + (x.kind === 'receber' ? x.amount : -x.amount), 0);
+                return { n, itens, saldo };
+            }).sort((a, b) => Math.abs(b.saldo) - Math.abs(a.saldo));
+            box.innerHTML = pessoas.length ? pessoas.map(p => `<div class="rpt-card !p-4">
+                <div class="flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold shrink-0">${escHTML(p.n.slice(0, 1).toUpperCase())}</span>
+                    <div class="min-w-0 flex-1"><p class="text-sm font-semibold truncate">${escHTML(p.n)}</p><p class="text-[11px] ${p.saldo > 0 ? 'text-emerald-400' : p.saldo < 0 ? 'text-rose-400' : 'text-slate-500'}">${p.saldo > 0 ? `te deve <span class="sensitive">${fmt(p.saldo)}</span>` : p.saldo < 0 ? `você deve <span class="sensitive">${fmt(-p.saldo)}</span>` : 'tudo acertado ✓'}</p></div>
+                </div>
+                <div class="mt-2 divide-y divide-slate-100 dark:divide-white/[0.06]">${p.itens.map(x => `<div class="flex items-center gap-2 py-2 ${x.paid ? 'opacity-50' : ''}">
+                    <div class="min-w-0 flex-1"><p class="text-[13px] truncate ${x.paid ? 'line-through' : ''}">${escHTML(x.desc)}</p><p class="text-[10px] text-slate-500">${fmtDateBR(x.date)} · ${x.kind === 'receber' ? 'você pagou' : `${escHTML(p.n)} pagou por você`}</p></div>
+                    <span class="sensitive text-[13px] font-semibold ${x.kind === 'receber' ? 'text-emerald-400' : 'text-rose-400'}">${fmt(x.amount)}</span>
+                    <button type="button" onclick="splitMarkPaid('${x.id}')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold ${x.paid ? 'bg-slate-800 text-slate-400' : 'bg-emerald-500/15 text-emerald-400'}">${x.paid ? 'Desfazer' : x.kind === 'receber' ? 'Recebi' : 'Paguei'}</button>
+                    ${x.txId ? '' : `<button type="button" onclick="splitDelete('${x.id}')" class="w-7 h-7 text-slate-500" aria-label="Excluir"><i class="fa-solid fa-trash text-[11px]"></i></button>`}
+                </div>`).join('')}</div>
+            </div>`).join('') : `<div class="rpt-card text-center"><p class="text-sm font-semibold">Nada dividido ainda</p><p class="text-xs text-slate-400 mt-1">No extrato, toque na categoria de um gasto e em <b>Dividir este gasto</b>.</p></div>`;
         };
 
         function renderSmartFeatures() {
